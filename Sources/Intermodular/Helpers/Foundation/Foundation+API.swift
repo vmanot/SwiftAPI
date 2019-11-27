@@ -4,6 +4,7 @@
 
 import CombineX
 import Foundation
+import ObjectiveC
 import Swift
 
 extension URLRequest: Request {
@@ -11,10 +12,10 @@ extension URLRequest: Request {
     public typealias Error = URLError
 }
 
-extension URLSession: RequestSession {
+extension URLSession: RequestSession {    
     public typealias Request = URLRequest
     
-    public func task(with request: Request) -> Future<Request.Response, Request.Error> {
-        dataTaskPublisher(for: request).toFuture()
+    public func task(with request: Request) -> DataTaskPublisher {
+        dataTaskPublisher(for: request)
     }
 }

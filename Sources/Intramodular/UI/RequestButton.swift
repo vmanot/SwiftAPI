@@ -9,11 +9,11 @@ public struct RequestButton<R: Request, Label: View>: View {
     public enum ButtonState {
         case inactive
         case active
-        case complete(R.Result)
+        case success
+        case failure
     }
     
     private let request: R
-    private let session: AnyRequestSession<R>
     private let completion: (R.Result) -> ()
     private let label: Label
     
@@ -22,28 +22,54 @@ public struct RequestButton<R: Request, Label: View>: View {
     @State private var didTry: Bool = false
     @State private var state: ButtonState = .inactive
     
+    @State private var cancellable: AnyCancellable?
+
+    @EnvironmentObjectOrState private var session: AnyRequestSession<R>
+        
     public init(
         request: R,
         session: AnyRequestSession<R>,
-        completion: @escaping (R.Result) -> (),
+        completion: @escaping (R.Result) -> () = { _ in },
         @ViewBuilder label: () -> Label
     ) {
         self.request = request
-        self.session = session
+        self._session = .init(wrappedValue: session)
         self.completion = completion
         self.label = label()
     }
     
-    @State var cancellable: AnyCancellable?
+    public init(
+        request: R,
+        completion: @escaping (R.Result) -> () = { _ in },
+        @ViewBuilder label: () -> Label
+    ) {
+        self.request = request
+        self.completion = completion
+        self.label = label()
+    }
     
+    public init(
+        request: R,
+        action: @escaping () -> (),
+        @ViewBuilder label: () -> Label
+    ) {
+        self.request = request
+        self.completion = { _ in action() }
+        self.label = label()
+    }
+
     public var body: some View {
-        Button(action: trigger) {
-            ZStack {
-                label.hidden(cancellable != nil)
-                ActivityIndicator().hidden(cancellable == nil)
+        Button(action: run) {
+            HStack {
+                label
+                
+                SwitchOver(state)
+                    .case(predicate: {
+                    if case .active = $0 { return true } else { return false }
+                }) {
+                    ActivityIndicator()
+                }
             }
-        }.contextMenu {
-            Button("Cancel", action: cancel)
         }
     }
     
@@ -59,14 +85,18 @@ public struct RequestButton<R: Request, Label: View>: View {
     func run() {
         cancellable = session
             .task(with: request)
-            .receiveOnMain()
-            .toFuture()
             .sinkResult(complete)
-        
+
+        cancellable?.store(in: &session.cancellables)
+                
         state = .active
     }
     
     func cancel() {
+        guard cancellable != nil else {
+            return
+        }
+        
         cancellable?.cancel()
         cancellable = nil
         
@@ -78,7 +108,12 @@ public struct RequestButton<R: Request, Label: View>: View {
         
         completion(result)
         
-        state = .complete(result)
+        switch result {
+            case .success:
+                state = .success
+            case .failure:
+                state = .failure
+        }
     }
 }
 

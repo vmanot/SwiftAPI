@@ -17,9 +17,7 @@ extension RequestResponseTransformable {
     public static func task<Session: RequestSession>(
         with request: Request,
         in session: Session
-    ) -> Future<Self, Error> where Session.Request == Request {
-        session
-            .task(with: request).tryMap({ try Self(from: $0) })
-            .toFuture()
+    ) -> AnyPublisher<Self, Error> where Session.Request == Request {
+        session.task(with: request).tryMap({ try Self(from: $0) }).eraseToAnyPublisher()
     }
 }
