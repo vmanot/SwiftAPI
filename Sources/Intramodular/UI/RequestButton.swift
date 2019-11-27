@@ -5,20 +5,22 @@
 import CombineX
 import SwiftUIX
 
-public enum RequestButtonState {
-    case inactive
-    case active
-    case disabled
-    case failed(Error)
-}
-
 public struct RequestButton<R: Request, Label: View>: View {
+    public enum ButtonState {
+        case inactive
+        case active
+        case complete(R.Result)
+    }
+    
     private let request: R
     private let session: AnyRequestSession<R>
     private let completion: (R.Result) -> ()
     private let label: Label
     
     private var canRetry: Bool = true
+    
+    @State private var didTry: Bool = false
+    @State private var state: ButtonState = .inactive
     
     public init(
         request: R,
@@ -41,11 +43,15 @@ public struct RequestButton<R: Request, Label: View>: View {
                 ActivityIndicator().hidden(cancellable == nil)
             }
         }.contextMenu {
-            Button("Delete", action: cancel)
+            Button("Cancel", action: cancel)
         }
     }
     
     func trigger() {
+        if !canRetry && didTry {
+            return
+        }
+        
         cancel()
         run()
     }
@@ -56,15 +62,23 @@ public struct RequestButton<R: Request, Label: View>: View {
             .receiveOnMain()
             .toFuture()
             .sinkResult(complete)
+        
+        state = .active
     }
     
     func cancel() {
         cancellable?.cancel()
         cancellable = nil
+        
+        state = .inactive
     }
     
     func complete(_ result: R.Result) {
+        didTry = true
+        
         completion(result)
+        
+        state = .complete(result)
     }
 }
 
