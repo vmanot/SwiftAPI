@@ -7,7 +7,7 @@ import Foundation
 import SwiftUIX
 
 /// A button that triggers a `URLRequest`.
-public struct URLRequestButton<Label: View> {
+public struct URLRequestButton<Label: View>: View {
     private let request: URLRequest
     private let completion: (URLRequest.Result) -> ()
     private let label: Label
@@ -27,7 +27,7 @@ public struct URLRequestButton<Label: View> {
             request: request,
             session: .init(URLSession.shared),
             completion: completion,
-            label: { label }
+            label: { self.label }
         )
     }
 }

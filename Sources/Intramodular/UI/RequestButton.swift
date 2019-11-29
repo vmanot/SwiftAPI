@@ -15,27 +15,34 @@ public struct RequestButton<R: Request, Label: View>: View {
     
     private let request: R
     private let completion: (R.Result) -> ()
-    private let label: Label
+    private let label: (ButtonState) -> Label
     
     private var canRetry: Bool = true
     
     @State private var didTry: Bool = false
     @State private var state: ButtonState = .inactive
-    
     @State private var cancellable: AnyCancellable?
-
+    
     @EnvironmentObjectOrState private var session: AnyRequestSession<R>
-        
+    
+    public var body: some View {
+        Button(action: run) {
+            label(state)
+        }
+    }
+    
     public init(
         request: R,
         session: AnyRequestSession<R>,
         completion: @escaping (R.Result) -> () = { _ in },
         @ViewBuilder label: () -> Label
     ) {
+        let _label = label()
+        
         self.request = request
         self._session = .init(wrappedValue: session)
         self.completion = completion
-        self.label = label()
+        self.label = { _ in _label }
     }
     
     public init(
@@ -43,9 +50,11 @@ public struct RequestButton<R: Request, Label: View>: View {
         completion: @escaping (R.Result) -> () = { _ in },
         @ViewBuilder label: () -> Label
     ) {
+        let _label = label()
+        
         self.request = request
         self.completion = completion
-        self.label = label()
+        self.label = { _ in _label }
     }
     
     public init(
@@ -53,24 +62,11 @@ public struct RequestButton<R: Request, Label: View>: View {
         action: @escaping () -> (),
         @ViewBuilder label: () -> Label
     ) {
+        let _label = label()
+        
         self.request = request
         self.completion = { _ in action() }
-        self.label = label()
-    }
-
-    public var body: some View {
-        Button(action: run) {
-            HStack {
-                label
-                
-                SwitchOver(state)
-                    .case(predicate: {
-                    if case .active = $0 { return true } else { return false }
-                }) {
-                    ActivityIndicator()
-                }
-            }
-        }
+        self.label = { _ in _label }
     }
     
     func trigger() {
@@ -85,10 +81,11 @@ public struct RequestButton<R: Request, Label: View>: View {
     func run() {
         cancellable = session
             .task(with: request)
+            .receiveOnMain()
             .sinkResult(complete)
-
+        
         cancellable?.store(in: &session.cancellables)
-                
+        
         state = .active
     }
     
