@@ -12,7 +12,7 @@ extension URLRequest: Request {
     public typealias Error = URLError
 }
 
-extension URLSession: RequestSession {    
+extension URLSession: RequestSession {
     public typealias Request = URLRequest
     
     public func task(with request: Request) -> DataTaskPublisher {

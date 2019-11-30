@@ -5,22 +5,22 @@
 import CombineX
 import SwiftUIX
 
+public enum RequestButtonState {
+    case inactive
+    case active
+    case success
+    case failure
+}
+
 public struct RequestButton<R: Request, Label: View>: View {
-    public enum ButtonState {
-        case inactive
-        case active
-        case success
-        case failure
-    }
-    
     private let request: R
     private let completion: (R.Result) -> ()
-    private let label: (ButtonState) -> Label
+    private let label: (RequestButtonState) -> Label
     
     private var canRetry: Bool = true
     
     @State private var didTry: Bool = false
-    @State private var state: ButtonState = .inactive
+    @State private var state: RequestButtonState = .inactive
     @State private var cancellable: AnyCancellable?
     
     @EnvironmentObjectOrState private var session: AnyRequestSession<R>
@@ -31,6 +31,18 @@ public struct RequestButton<R: Request, Label: View>: View {
         }
     }
     
+    public init(
+        request: R,
+        session: AnyRequestSession<R>,
+        completion: @escaping (R.Result) -> () = { _ in },
+        @ViewBuilder label: @escaping (RequestButtonState) -> Label
+    ) {
+        self.request = request
+        self._session = .init(wrappedValue: session)
+        self.completion = completion
+        self.label = label
+    }
+
     public init(
         request: R,
         session: AnyRequestSession<R>,
@@ -48,6 +60,16 @@ public struct RequestButton<R: Request, Label: View>: View {
     public init(
         request: R,
         completion: @escaping (R.Result) -> () = { _ in },
+        @ViewBuilder label: @escaping (RequestButtonState) -> Label
+    ) {
+        self.request = request
+        self.completion = completion
+        self.label = label
+    }
+
+    public init(
+        request: R,
+        completion: @escaping (R.Result) -> () = { _ in },
         @ViewBuilder label: () -> Label
     ) {
         let _label = label()
@@ -57,6 +79,16 @@ public struct RequestButton<R: Request, Label: View>: View {
         self.label = { _ in _label }
     }
     
+    public init(
+        request: R,
+        action: @escaping () -> (),
+        @ViewBuilder label: @escaping (RequestButtonState) -> Label
+    ) {
+        self.request = request
+        self.completion = { _ in action() }
+        self.label = label
+    }
+
     public init(
         request: R,
         action: @escaping () -> (),
