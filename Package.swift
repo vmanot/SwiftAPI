@@ -14,13 +14,12 @@ let package = Package(
         .library(name: "API", targets: ["API"])
     ],
     dependencies: [
-        .package(url: "git@github.com:vmanot/CombineX.git", .branch("master")),
-        .package(url: "git@github.com:vmanot/SwiftUIX.git", .branch("master"))
+        .package(url: "git@github.com:vmanot/CombineX.git", .branch("master"))
     ],
     targets: [
         .target(
             name: "API",
-            dependencies: ["CombineX", "SwiftUIX"],
+            dependencies: ["CombineX"],
             path: "Sources"
         ),
     ],
