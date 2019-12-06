@@ -43,4 +43,11 @@ public final class AnyRequestSession<R: Request>: ObservableObject, RequestSessi
     public func task(with request: R) -> AnyPublisher<R.Response, R.Error> {
         taskImpl(request)
     }
+    
+    // FIXME!
+    public func trigger(_ request: R) {
+        task(with: request)
+            .sink()
+            .store(in: &cancellables)
+    }
 }
