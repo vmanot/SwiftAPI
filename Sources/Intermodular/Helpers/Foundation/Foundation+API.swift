@@ -2,7 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CombineX
+import Merge
 import Foundation
 import ObjectiveC
 import Swift

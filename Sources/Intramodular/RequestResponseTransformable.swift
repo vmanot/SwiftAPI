@@ -2,7 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
-import CombineX
+import Merge
 import Swift
 
 public protocol RequestResponseTransformable {
