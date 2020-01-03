@@ -47,6 +47,6 @@ public final class AnyRequestSession<R: Request>: ObservableObject, RequestSessi
     
     public func trigger(_ request: R) {
         task(with: request)
-            .sink(insertInto: cancellables)
+            .subscribe(storeIn: cancellables)
     }
 }
