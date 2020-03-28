@@ -7,8 +7,9 @@ import Swift
 
 public protocol RequestBuilder {
     associatedtype Request: API.Request
+    associatedtype RequestParameters
     
-    func buildRequest() throws -> Request
+    func buildRequest(with _: RequestParameters) throws -> Request
 }
 
 public protocol RequestCoordinator: RequestBuilder, RequestResponseTransformer {
