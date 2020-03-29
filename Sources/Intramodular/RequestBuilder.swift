@@ -11,8 +11,3 @@ public protocol RequestBuilder {
     
     func buildRequest(with _: RequestParameters) throws -> Request
 }
-
-public protocol RequestCoordinator: RequestBuilder, RequestResponseTransformer {
-    func task<S: RequestSession>(in session: S)
-        -> Future<Output, Error> where S.Request == Request
-}
