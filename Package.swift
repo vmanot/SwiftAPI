@@ -14,12 +14,16 @@ let package = Package(
         .library(name: "API", targets: ["API"])
     ],
     dependencies: [
-        .package(url: "git@github.com:vmanot/Merge.git", .branch("master"))
+        .package(url: "git@github.com:vmanot/Merge.git", .branch("master")),
+        .package(url: "git@github.com:vmanot/Task.git", .branch("master"))
     ],
     targets: [
         .target(
             name: "API",
-            dependencies: ["Merge"],
+            dependencies: [
+                "Merge",
+                "Task"
+            ],
             path: "Sources"
         ),
     ],

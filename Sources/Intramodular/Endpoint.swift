@@ -6,7 +6,7 @@ import Combine
 import Swift
 
 public protocol Endpoint {
-    associatedtype Root: ApplicationProgramInterface
+    associatedtype Root: ProgramInterface
     
     associatedtype Input: Encodable
     associatedtype Output: Decodable
