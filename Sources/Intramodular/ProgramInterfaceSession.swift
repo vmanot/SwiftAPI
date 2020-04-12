@@ -19,7 +19,7 @@ public protocol ProgramInterfaceSession {
 
 extension ProgramInterfaceSession {
     public func task<E: Endpoint>(
-        for keyPath: KeyPath<Interface, E>
+        for endpointKeypath: KeyPath<Interface, E>
     ) -> ParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
         return .init(body: { (task: ParametrizedTask) in
             guard let input = task.parameter else {
@@ -28,7 +28,7 @@ extension ProgramInterfaceSession {
                 return .empty()
             }
             
-            let endpoint = self.interface[keyPath: keyPath]
+            let endpoint = self.interface[keyPath: endpointKeypath]
             
             do {
                 return try self.session.task(with: endpoint.buildRequest(for: self.interface, from: input)).sinkResult({ [weak task] result in
@@ -51,6 +51,20 @@ extension ProgramInterfaceSession {
                 return AnyCancellable.empty()
             }
         })
+    }
+    
+    public func run<E: Endpoint>(
+        _ endpoint: KeyPath<Interface, E>,
+        with input: E.Input
+    ) -> Task<E.Output, Interface.Error> where E.Root == Interface {
+        let result = task(for: endpoint)
+        
+        result.receive(input)
+        result.start()
+        
+        session.cancellables.insert(result)
+        
+        return result
     }
 }
 
