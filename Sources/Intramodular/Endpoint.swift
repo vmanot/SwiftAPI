@@ -5,11 +5,6 @@
 import Combine
 import Swift
 
-public protocol EndpointDescriptor {
-    associatedtype Input: Encodable
-    associatedtype Output: Decodable
-}
-
 public protocol Endpoint {
     associatedtype Root: ProgramInterface
     
