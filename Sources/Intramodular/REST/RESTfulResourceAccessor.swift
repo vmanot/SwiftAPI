@@ -2,6 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Dispatch
 import Merge
 import Swallow
 import Task
@@ -30,14 +31,27 @@ public struct RESTfulResourceAccessor<
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
 >: RESTfulResourceAccessorProtocol where Container.Interface == Root, GetEndpoint.Root == Root, SetEndpoint.Root == Root {
-    public let get: EndpointConstructor<GetEndpoint>?
-    public let set: EndpointConstructor<SetEndpoint>?
+    @usableFromInline
+    let get: EndpointConstructor<GetEndpoint>?
     
-    public var lastGetTask: Task<GetEndpoint.Output, Root.Error>?
-    public var lastGetResult: TaskResult<Value, Swift.Error>?
+    @usableFromInline
+    let set: EndpointConstructor<SetEndpoint>?
     
-    public var lastSetTask: Task<SetEndpoint.Output, Root.Error>?
-    public var lastSetResult: TaskResult<Void, Swift.Error>?
+    @usableFromInline
+    weak var _container: Container?
+    @usableFromInline
+    var _containerSubscription: AnyCancellable?
+    @usableFromInline
+    var _storageKeyPath: ReferenceWritableKeyPath<Container, Self>?
+    
+    @usableFromInline
+    var lastGetTask: Task<GetEndpoint.Output, Root.Error>?
+    @usableFromInline
+    var lastGetResult: TaskResult<Value, Swift.Error>?
+    @usableFromInline
+    var lastSetTask: Task<SetEndpoint.Output, Root.Error>?
+    @usableFromInline
+    var lastSetResult: TaskResult<Void, Swift.Error>?
     
     public var wrappedValue: Value? = nil
     
@@ -59,6 +73,8 @@ public struct RESTfulResourceAccessor<
             object[keyPath: storageKeyPath].receiveEnclosingInstance(object, storageKeyPath: storageKeyPath)
             
             object[keyPath: storageKeyPath].wrappedValue = newValue
+            
+            (object.objectWillChange as? opaque_VoidSender)?.send()
         }
     }
     
@@ -67,28 +83,66 @@ public struct RESTfulResourceAccessor<
         _ object:  EnclosingSelf,
         storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Self>
     ) where EnclosingSelf.Interface == Root {
-        guard let object = object as? Container, let storageKeyPath = storageKeyPath as? ReferenceWritableKeyPath<Container, Self> else {
+        var isFirstRun = _container == nil
+        
+        guard let container = object as? Container, let storageKeyPath = storageKeyPath as? ReferenceWritableKeyPath<Container, Self> else {
             assertionFailure()
             
             return
         }
         
-        if let get = get, wrappedValue == nil {
-            do {
-                let task = object.run(get.path, with: try get.input(object))
+        self._container = container
+        self._storageKeyPath = storageKeyPath
+        
+        if isFirstRun {
+            _containerSubscription = container.objectWillChange.sinkResult { [weak container] _ in
+                guard let `container` = container else {
+                    return
+                }
                 
-                object[keyPath: storageKeyPath].lastGetTask = task
-                
-                task.onResult({ result in
-                    do {
-                        object[keyPath: storageKeyPath].lastGetResult = try result.map(get.output).mapError({ $0 as Swift.Error })
-                    } catch {
-                        object[keyPath: storageKeyPath].lastGetResult = .error(error)
-                    }
-                })
-            } catch {
-                lastGetResult = .error(error)
+                if container[keyPath: storageKeyPath].wrappedValue == nil {
+                    container[keyPath: storageKeyPath].performGetTask()
+                }
             }
+        }
+        if wrappedValue == nil {
+            performGetTask()
+        }
+    }
+    
+    mutating func performGetTask() {
+        guard let container = _container, let storageKeyPath = _storageKeyPath else {
+            assertionFailure()
+            
+            return
+        }
+        
+        guard let get = get, lastGetResult == nil else {
+            return
+        }
+        
+        do {
+            let task = container.run(get.path, with: try get.input(container))
+            
+            lastGetTask = task
+            
+            task.onResult({ result in
+                do {
+                    container[keyPath: storageKeyPath].lastGetResult = try result
+                        .map(get.output)
+                        .mapError({ $0 as Swift.Error })
+                    
+                    container[keyPath: storageKeyPath].lastGetTask = nil
+                    
+                    DispatchQueue.main.async {
+                        (container.objectWillChange as? opaque_VoidSender)?.send()
+                    }
+                } catch {
+                    container[keyPath: storageKeyPath].lastGetResult = .error(error)
+                }
+            })
+        } catch {
+            lastGetResult = .error(error)
         }
     }
 }
@@ -96,15 +150,13 @@ public struct RESTfulResourceAccessor<
 extension RESTfulResourceAccessor {
     public init(
         wrappedValue: Value? = nil,
-        get: KeyPath<Root, GetEndpoint>? = nil
+        get: KeyPath<Root, GetEndpoint>
     ) where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
-        self.get = get.map { get in
-            EndpointConstructor(
-                path: get,
-                input: { _ in .init() },
-                output: { $0 }
-            )
-        }
+        self.get = EndpointConstructor(
+            path: get,
+            input: { _ in .init() },
+            output: { $0 }
+        )
         
         self.set = nil
     }
@@ -141,6 +193,18 @@ extension RESTfulResourceAccessor where SetEndpoint == NeverEndpoint<Root> {
 }
 
 // MARK: - Protocol Implementations -
+
+extension RESTfulResourceAccessor {
+    public func refresh() {
+        guard let container = _container, let storageKeyPath = _storageKeyPath else {
+            assertionFailure()
+            
+            return
+        }
+        
+        container[keyPath: storageKeyPath].performGetTask()
+    }
+}
 
 extension RESTfulResourceAccessor: Cancellable {
     public func cancel() {
@@ -179,4 +243,26 @@ extension RESTfulResourceAccessor {
 
 extension Repository where Interface: RESTfulInterface {
     public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<Value, Self, Interface, GetEndpoint, SetEndpoint> where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
+}
+
+extension Result {
+    public init?<Container, Root, GetEndpoint, SetEndpoint>(
+        resource: RESTfulResourceAccessor<Success, Container, Root, GetEndpoint, SetEndpoint>
+    ) where Failure == Error {
+        switch resource.lastGetResult {
+            case .none:
+                return nil
+            case .some(let result): do {
+                switch result {
+                    case .canceled:
+                        return nil
+                    case .success(let value):
+                        self = .success(value)
+                    case .error(let error):
+                        self = .failure(error)
+                }
+            }
+            
+        }
+    }
 }

@@ -9,7 +9,7 @@ import Task
 /// A data repository.
 ///
 /// The combination of a program interface and a compatible request session.
-public protocol Repository {
+public protocol Repository: ObservableObject {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
     
