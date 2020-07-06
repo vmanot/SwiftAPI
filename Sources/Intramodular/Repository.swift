@@ -3,13 +3,13 @@
 //
 
 import Merge
-import Swift
+import Swallow
 import Task
 
-/// A program interface session.
+/// A data repository.
 ///
 /// The combination of a program interface and a compatible request session.
-public protocol ProgramInterfaceSession {
+public protocol Repository {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
     
@@ -17,7 +17,7 @@ public protocol ProgramInterfaceSession {
     var session: Session { get }
 }
 
-extension ProgramInterfaceSession {
+extension Repository {
     public func task<E: Endpoint>(
         for endpointKeypath: KeyPath<Interface, E>
     ) -> ParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
@@ -37,7 +37,7 @@ extension ProgramInterfaceSession {
                             do {
                                 task?.send(.success(try endpoint.decodeOutput(from: value)))
                             } catch {
-                                task?.send(.error(.invalidOutput()))
+                                task?.send(.error(.init(runtimeError: error)))
                             }
                         }
                         case .failure(let error): do {
@@ -70,7 +70,34 @@ extension ProgramInterfaceSession {
 
 // MARK: - Auxiliary Implementation -
 
-private enum _DefaultProgramInterfaceSessionError: Error {
+open class RepositoryBase<Interface: ProgramInterface, Session: RequestSession>: Repository where Interface.Request == Session.Request {
+    @Published public var interface: Interface {
+        didSet {
+            session.cancellables.cancel()
+        }
+    }
+    
+    @Published public var session: Session
+    
+    public init(interface: Interface, session: Session) {
+        self.interface = interface
+        self.session = session
+    }
+    
+    public convenience init(interface: Interface) where Session: Initiable {
+        self.init(interface: interface, session: .init())
+    }
+    
+    public convenience init(session: Session) where Interface: Initiable {
+        self.init(interface: .init(), session: session)
+    }
+    
+    public convenience init() where Interface: Initiable, Session: Initiable {
+        self.init(interface: .init(), session: .init())
+    }
+}
+
+private enum _DefaultRepositoryError: Error {
     case missingInput
     case invalidInput
     case invalidOutput
@@ -78,14 +105,14 @@ private enum _DefaultProgramInterfaceSessionError: Error {
 
 private extension ProgramInterfaceError {
     static func missingInput() -> Self {
-        .init(runtimeError: _DefaultProgramInterfaceSessionError.missingInput)
+        .init(runtimeError: _DefaultRepositoryError.missingInput)
     }
     
     static func invalidInput() -> Self {
-        .init(runtimeError: _DefaultProgramInterfaceSessionError.invalidInput)
+        .init(runtimeError: _DefaultRepositoryError.invalidInput)
     }
     
     static func invalidOutput() -> Self {
-        .init(runtimeError: _DefaultProgramInterfaceSessionError.invalidOutput)
+        .init(runtimeError: _DefaultRepositoryError.invalidOutput)
     }
 }

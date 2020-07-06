@@ -6,7 +6,7 @@ import Merge
 import ObjectiveC
 import Swift
 
-public protocol RequestSession {
+public protocol RequestSession: Identifiable {
     associatedtype Request: API.Request
     associatedtype TaskPublisher: Publisher where TaskPublisher.Output == Request.Response, TaskPublisher.Failure == Request.Error
     
@@ -35,16 +35,22 @@ extension RequestSession where Self: AnyObject {
 
 // MARK: - Concrete Implementations -
 
-public final class AnyRequestSession<R: Request>: ObservableObject, RequestSession {
+public final class AnyRequestSession<R: Request>: Identifiable, ObservableObject, RequestSession {
     private let cancellablesImpl: () -> Cancellables
+    private let idImpl: () -> AnyHashable
     private let taskImpl: (R) -> AnyPublisher<R.Response, R.Error>
     
     public var cancellables: Cancellables {
         cancellablesImpl()
     }
     
+    public var id: AnyHashable {
+        idImpl()
+    }
+    
     public init<S: RequestSession>(_ session: S) where S.Request == R {
         self.cancellablesImpl = { session.cancellables }
+        self.idImpl = { session.id }
         self.taskImpl = { session.task(with: $0).eraseToAnyPublisher() }
     }
     

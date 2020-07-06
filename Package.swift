@@ -15,6 +15,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "git@github.com:vmanot/Merge.git", .branch("master")),
+        .package(url: "git@github.com:vmanot/Swallow.git", .branch("master")),
         .package(url: "git@github.com:vmanot/Task.git", .branch("master"))
     ],
     targets: [
@@ -22,6 +23,7 @@ let package = Package(
             name: "API",
             dependencies: [
                 "Merge",
+                "Swallow",
                 "Task"
             ],
             path: "Sources"
