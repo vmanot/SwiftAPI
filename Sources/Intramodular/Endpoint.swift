@@ -5,7 +5,7 @@
 import Combine
 import Swallow
 
-/// An type that represents an endpoint of some API.
+/// An type that represents an API's endpoint.
 public protocol Endpoint {
     /// The API this endpoint is associated to.
     associatedtype Root: ProgramInterface
@@ -30,6 +30,7 @@ public protocol Endpoint {
 
 // MARK: - Auxiliary Implementation -
 
+/// An unreachable endpoint.
 public struct NeverEndpoint<Root: ProgramInterface>: Endpoint {
     public typealias Input = Never
     public typealias Output = Never
