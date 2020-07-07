@@ -61,11 +61,7 @@ public struct RESTfulResourceAccessor<
         get {
             _wrappedValue
         } set {
-            if let container = _container {
-                DispatchQueue.asyncOnMainIfNecessary {
-                    (container.objectWillChange as? opaque_VoidSender)?.send()
-                }
-            }
+            notifyContainer()
             
             _wrappedValue = newValue
         }
@@ -196,7 +192,7 @@ public struct RESTfulResourceAccessor<
         }
         
         _wrappedValue = lastGetTaskResult?.successValue
-
+        
         notifyContainer()
     }
     
