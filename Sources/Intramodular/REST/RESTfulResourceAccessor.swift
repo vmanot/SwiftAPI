@@ -24,24 +24,28 @@ public protocol RESTfulResourceAccessorProtocol {
 ///
 /// This type is responsible for getting/setting resource values and managing their dependencies in a repository.
 @propertyWrapper
-public struct RESTfulResourceAccessor<
-    Value,
+public final class RESTfulResourceAccessor<
+    Value: RESTfulResource,
     Container: Repository,
     Root,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
 >: RESTfulResourceAccessorProtocol where Container.Interface == Root, GetEndpoint.Root == Root, SetEndpoint.Root == Root {
     @usableFromInline
-    let get: EndpointConstructor<GetEndpoint>?
+    let get: EndpointConstructor<GetEndpoint>
     @usableFromInline
-    let set: EndpointConstructor<SetEndpoint>?
-    
+    let getDependencies: [Dependency]
+    @usableFromInline
+    let set: EndpointConstructor<SetEndpoint>
+    @usableFromInline
+    let setDependencies: [Dependency]
+        
     @usableFromInline
     weak var _container: Container?
     @usableFromInline
     var _containerSubscription: AnyCancellable?
     @usableFromInline
-    var _storageKeyPath: ReferenceWritableKeyPath<Container, Self>?
+    var _storageKeyPath: ReferenceWritableKeyPath<Container, RESTfulResourceAccessor>? = nil
     @usableFromInline
     var _lastRootID: Root.ID?
     
@@ -57,6 +61,18 @@ public struct RESTfulResourceAccessor<
     @usableFromInline
     var lastSetTaskResult: TaskResult<Void, Swift.Error>?
     
+    init(
+        get: EndpointConstructor<GetEndpoint>,
+        dependencies getDependencies: [Dependency],
+        set: EndpointConstructor<SetEndpoint>,
+        dependencies setDependencies: [Dependency]
+    ) {
+        self.get = get
+        self.getDependencies = getDependencies
+        self.set = set
+        self.setDependencies = setDependencies
+    }
+
     public var wrappedValue: Value? {
         get {
             _wrappedValue
@@ -67,7 +83,7 @@ public struct RESTfulResourceAccessor<
         }
     }
     
-    public var projectedValue: Self {
+    public var projectedValue: RESTfulResourceAccessor {
         self
     }
     
@@ -75,7 +91,7 @@ public struct RESTfulResourceAccessor<
     public static subscript<EnclosingSelf: Repository>(
         _enclosingInstance object: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value?>,
-        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Self>
+        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, RESTfulResourceAccessor>
     ) -> Value? where EnclosingSelf.Interface == Root {
         get {
             object[keyPath: storageKeyPath].receiveEnclosingInstance(object, storageKeyPath: storageKeyPath)
@@ -89,13 +105,13 @@ public struct RESTfulResourceAccessor<
     }
     
     @usableFromInline
-    mutating func receiveEnclosingInstance<EnclosingSelf: Repository>(
+    func receiveEnclosingInstance<EnclosingSelf: Repository>(
         _ object:  EnclosingSelf,
-        storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Self>
+        storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, RESTfulResourceAccessor>
     ) where EnclosingSelf.Interface == Root {
         let isFirstRun = _container == nil
         
-        guard let container = object as? Container, let storageKeyPath = storageKeyPath as? ReferenceWritableKeyPath<Container, Self> else {
+        guard let container = object as? Container, let storageKeyPath = storageKeyPath as? ReferenceWritableKeyPath<Container, RESTfulResourceAccessor> else {
             assertionFailure()
             
             return
@@ -106,20 +122,18 @@ public struct RESTfulResourceAccessor<
         self._lastRootID = container.interface.id
         
         if isFirstRun {
-            _containerSubscription = container.objectWillChange.receive(on: DispatchQueue.main).sinkResult { [weak container] _ in
-                guard let `container` = container else {
+            _containerSubscription = container.objectWillChange.receive(on: DispatchQueue.main).sinkResult { [weak self, weak container] _ in
+                guard let `self` = self, let container = container else {
                     return
                 }
                 
-                if container[keyPath: storageKeyPath].needsAutomaticGet {
-                    container[keyPath: storageKeyPath].performGetTask()
+                if self.needsAutomaticGet {
+                    self.performGetTask()
                 }
                 
-                container[keyPath: storageKeyPath]._lastRootID = container.interface.id
+                self._lastRootID = container.interface.id
             }
         }
-        
-        willPublishSignificantChange()
     }
 }
 
@@ -136,50 +150,62 @@ extension RESTfulResourceAccessor {
 }
 
 extension RESTfulResourceAccessor {
-    private var needsAutomaticGet: Bool {
-        if let container = _container {
-            if container.interface.id != _lastRootID {
-                return true
+    private var getDependenciesAreMet: Bool {
+        guard let container = _container else {
+            return false
+        }
+
+        for dependency in getDependencies {
+            if !dependency.isAvailable(in: container) {
+                return false
             }
         }
         
+        return true
+    }
+    
+    private var needsAutomaticGet: Bool {
+        guard let container = _container else {
+            return false
+        }
+    
         if let lastGetTaskResult = lastGetTaskResult {
             if lastGetTaskResult == .canceled || lastGetTaskResult == .error {
                 return false
             }
         }
         
-        if let lastGetTask = lastGetTask {
-            if lastGetTask.isActive {
-                return false
-            }
+        guard container.interface.id == _lastRootID else {
+            return true
+        }
+        
+        guard lastGetTask == nil else {
+            return false
         }
         
         return wrappedValue == nil
     }
     
-    mutating func performGetTask() {
-        guard let container = _container, let storageKeyPath = _storageKeyPath else {
+    func performGetTask() {
+        guard let container = _container else {
             assertionFailure()
             
             return
         }
         
-        guard let get = get else {
+        guard getDependenciesAreMet else {
             return
         }
         
         do {
-            if wrappedValue != nil || lastGetTaskResult != nil {
-                wrappedValue = nil
-                lastGetTaskResult = nil
-            }
-            
-            lastGetTask = container.run(get.path, with: try get.input(container))
-            lastGetTask?.onResult({ result in
+            lastGetTask = container.run(try get.endpoint(container), with: try get.input(container))
+            lastGetTask?.onResult({ [weak self] result in
+                guard let `self` = self else {
+                    return
+                }
+                
                 DispatchQueue.asyncOnMainIfNecessary {
-                    container[keyPath: storageKeyPath]
-                        .receiveGetTaskResult(result)
+                    `self`.receiveGetTaskResult(result)
                 }
             })
         } catch {
@@ -189,13 +215,7 @@ extension RESTfulResourceAccessor {
         willPublishSignificantChange()
     }
     
-    mutating func receiveGetTaskResult(_ result: TaskResult<GetEndpoint.Output, Root.Error>) {
-        guard let get = get else {
-            assertionFailure()
-            
-            return
-        }
-        
+    func receiveGetTaskResult(_ result: TaskResult<GetEndpoint.Output, Root.Error>) {
         do {
             lastGetTask = nil
             lastGetTaskResult = try result
@@ -212,47 +232,39 @@ extension RESTfulResourceAccessor {
 }
 
 extension RESTfulResourceAccessor {
-    public init(
+    public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>
     ) where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
-        self.get = EndpointConstructor(
-            path: get,
-            input: { _ in .init() },
-            output: { $0 }
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { _ in .init() },
+                output: { $0 }
+            ),
+            dependencies: [],
+            set: .init(),
+            dependencies: []
         )
-        
-        self.set = nil
     }
     
-    public init<R0: RESTfulResourceAccessorProtocol>(
+    public convenience init<R0: RESTfulResourceAccessorProtocol>(
         wrappedValue: Value? = nil,
-        get: KeyPath<Root, GetEndpoint>? = nil,
+        get: KeyPath<Root, GetEndpoint>,
         from r0: KeyPath<Container, R0>
     ) where GetEndpoint.Input: RESTfulResourceConstructible, GetEndpoint.Input.Resource == R0.Value, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
-        self.get = get.map { get in
-            EndpointConstructor(
-                path: get,
+        self.init(
+            get: .init(
+                endpoint: get,
                 input: { container in
                     try .init(from: container[keyPath: r0].wrappedValue.unwrap())
                 },
                 output: { $0 }
-            )
-        }
-        
-        self.set = nil
-    }
-}
-
-extension RESTfulResourceAccessor where SetEndpoint == NeverEndpoint<Root> {
-    public init<R0: RESTfulResourceAccessorProtocol, R1: RESTfulResourceAccessorProtocol>(
-        wrappedValue: Value? = nil,
-        get: KeyPath<Root, GetEndpoint>? = nil,
-        set: KeyPath<Root, SetEndpoint>? = nil,
-        dependencies first: KeyPath<Container, R0>,
-        _ second: KeyPath<Container, R1>
-    ) {
-        fatalError()
+            ),
+            dependencies: [ResourceDependency(location: r0)],
+            set: .init(),
+            dependencies: []
+        )
     }
 }
 
@@ -260,28 +272,20 @@ extension RESTfulResourceAccessor where SetEndpoint == NeverEndpoint<Root> {
 
 extension RESTfulResourceAccessor {
     public func refresh() {
-        guard let container = _container, let storageKeyPath = _storageKeyPath else {
-            assertionFailure()
-            
+        performGetTask()
+    }
+    
+    public func fetchIfNecessary() {
+        guard wrappedValue == nil else {
             return
         }
         
-        container[keyPath: storageKeyPath].performGetTask()
+        refresh()
     }
 }
 
 extension RESTfulResourceAccessor: Resettable {
-    public mutating func reset() {
-        guard let container = _container, let storageKeyPath = _storageKeyPath else {
-            assertionFailure()
-            
-            return
-        }
-        
-        container[keyPath: storageKeyPath]._reset()
-    }
-    
-    private mutating func _reset() {
+    public func reset() {
         _wrappedValue = nil
         
         lastGetTask = nil
@@ -301,6 +305,28 @@ extension RESTfulResourceAccessor: Cancellable {
 // MARK: - Auxiliary Implementation -
 
 extension RESTfulResourceAccessor {
+    @usableFromInline
+    class Dependency {
+        func isAvailable(in container: Container) -> Bool {
+            fatalError()
+        }
+    }
+    
+    @usableFromInline
+    final class ResourceDependency<R: RESTfulResourceAccessorProtocol>: Dependency {
+        let location: KeyPath<Container, R>
+        
+        init(location: KeyPath<Container, R>) {
+            self.location = location
+        }
+        
+        override func isAvailable(in container: Container) -> Bool {
+            container[keyPath: location].wrappedValue != nil
+        }
+    }
+}
+
+extension RESTfulResourceAccessor {
     public enum Error: Swift.Error {
         case some
     }
@@ -308,18 +334,36 @@ extension RESTfulResourceAccessor {
 
 extension RESTfulResourceAccessor {
     public struct EndpointConstructor<Endpoint: API.Endpoint> {
-        public let path: KeyPath<Root, Endpoint>
+        public let endpoint: (Container) throws -> Endpoint
         public let input: (Container) throws -> Endpoint.Input
         public let output: (Endpoint.Output) throws -> Value
         
         public init(
-            path: KeyPath<Root, Endpoint>,
+            endpoint: @escaping (Container) throws -> Endpoint,
             input: @escaping (Container) throws -> Endpoint.Input = { _ in throw Error.some },
             output: @escaping (Endpoint.Output) throws -> Value = { _ in throw Error.some }
         ) {
-            self.path = path
+            self.endpoint = endpoint
             self.input = input
             self.output = output
+        }
+        
+        public init(
+            endpoint: KeyPath<Root, Endpoint>,
+            input: @escaping (Container) throws -> Endpoint.Input = { _ in throw Error.some },
+            output: @escaping (Endpoint.Output) throws -> Value = { _ in throw Error.some }
+        ) {
+            self.endpoint = { $0.interface[keyPath: endpoint] }
+            self.input = input
+            self.output = output
+        }
+        
+        public init() where Endpoint == NeverEndpoint<Root> {
+            self.init(
+                endpoint: { _ in throw Error.some },
+                input: { _ in throw Error.some },
+                output: Never.materialize
+            )
         }
     }
 }
@@ -327,7 +371,7 @@ extension RESTfulResourceAccessor {
 // MARK: - Helpers -
 
 extension Repository where Interface: RESTfulInterface {
-    public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<Value, Self, Interface, GetEndpoint, SetEndpoint> where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
+    public typealias Resource<Value: RESTfulResource, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<Value, Self, Interface, GetEndpoint, SetEndpoint> where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
 }
 
 extension Result {

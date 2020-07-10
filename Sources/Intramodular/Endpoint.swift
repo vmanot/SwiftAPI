@@ -35,6 +35,10 @@ public struct NeverEndpoint<Root: ProgramInterface>: Endpoint {
     public typealias Input = Never
     public typealias Output = Never
     
+    public init() {
+        
+    }
+    
     public func buildRequest(for _: Root, from _: Input) throws -> Root.Request {
         Never.materialize(reason: .impossible)
     }

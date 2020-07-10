@@ -19,7 +19,7 @@ public protocol Repository: ObservableObject {
 
 extension Repository {
     public func task<E: Endpoint>(
-        for endpointKeypath: KeyPath<Interface, E>
+        for endpoint: E
     ) -> ParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
         return .init(body: { (task: ParametrizedTask) in
             guard let input = task.parameter else {
@@ -28,7 +28,7 @@ extension Repository {
                 return .empty()
             }
             
-            let endpoint = self.interface[keyPath: endpointKeypath]
+            let endpoint = endpoint
             
             do {
                 return try self.session.task(with: endpoint.buildRequest(for: self.interface, from: input)).sinkResult({ [weak task] result in
@@ -46,15 +46,21 @@ extension Repository {
                     }
                 })
             } catch {
-                task.send(.error(.invalidInput()))
+                task.send(.error(.init(runtimeError: error)))
                 
                 return AnyCancellable.empty()
             }
         })
     }
+
+    public func task<E: Endpoint>(
+        for endpointKeypath: KeyPath<Interface, E>
+    ) -> ParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
+        task(for: interface[keyPath: endpointKeypath])
+    }
     
     public func run<E: Endpoint>(
-        _ endpoint: KeyPath<Interface, E>,
+        _ endpoint: E,
         with input: E.Input
     ) -> Task<E.Output, Interface.Error> where E.Root == Interface {
         let result = task(for: endpoint)
@@ -65,6 +71,13 @@ extension Repository {
         session.cancellables.insert(result)
         
         return result
+    }
+
+    public func run<E: Endpoint>(
+        _ endpoint: KeyPath<Interface, E>,
+        with input: E.Input
+    ) -> Task<E.Output, Interface.Error> where E.Root == Interface {
+        run(interface[keyPath: endpoint], with: input)
     }
 }
 

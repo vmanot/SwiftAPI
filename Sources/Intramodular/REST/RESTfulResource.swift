@@ -13,3 +13,13 @@ public protocol RESTfulResourceConstructible {
     
     init(from resource: Resource) throws
 }
+
+// MARK: - Auxiliary Implementation -
+
+extension Array: RESTfulResource where Element: RESTfulResource {
+    
+}
+
+extension Optional: RESTfulResource where Wrapped: RESTfulResource {
+    
+}
