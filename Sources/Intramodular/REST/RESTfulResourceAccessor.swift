@@ -39,7 +39,7 @@ public final class RESTfulResourceAccessor<
     let set: EndpointConstructor<SetEndpoint>
     @usableFromInline
     let setDependencies: [Dependency]
-        
+    
     @usableFromInline
     weak var _container: Container?
     @usableFromInline
@@ -72,7 +72,7 @@ public final class RESTfulResourceAccessor<
         self.set = set
         self.setDependencies = setDependencies
     }
-
+    
     public var wrappedValue: Value? {
         get {
             _wrappedValue
@@ -154,7 +154,7 @@ extension RESTfulResourceAccessor {
         guard let container = _container else {
             return false
         }
-
+        
         for dependency in getDependencies {
             if !dependency.isAvailable(in: container) {
                 return false
@@ -168,7 +168,7 @@ extension RESTfulResourceAccessor {
         guard let container = _container else {
             return false
         }
-    
+        
         if let lastGetTaskResult = lastGetTaskResult {
             if lastGetTaskResult == .canceled || lastGetTaskResult == .error {
                 return false
