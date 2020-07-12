@@ -11,9 +11,7 @@ public protocol ProgramInterfaceError: Error {
     init(runtimeError: Error)
 }
 
-public enum DefaultProgramInterfaceError<I: ProgramInterface>: ProgramInterfaceError {
-    public typealias Interface = I
-    
+public enum DefaultProgramInterfaceError<Interface: ProgramInterface>: ProgramInterfaceError {
     case badRequest(Interface.Request.Error)
     case runtime(Error)
     

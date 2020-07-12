@@ -41,7 +41,7 @@ extension Repository {
                             }
                         }
                         case .failure(let error): do {
-                            task?.send(.error(.init(error)))
+                            task?.send(.error(.init(runtimeError: error)))
                         }
                     }
                 })
@@ -52,7 +52,7 @@ extension Repository {
             }
         })
     }
-
+    
     public func task<E: Endpoint>(
         for endpointKeypath: KeyPath<Interface, E>
     ) -> ParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
@@ -72,7 +72,7 @@ extension Repository {
         
         return result
     }
-
+    
     public func run<E: Endpoint>(
         _ endpoint: KeyPath<Interface, E>,
         with input: E.Input
