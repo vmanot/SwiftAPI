@@ -84,6 +84,8 @@ extension Repository {
 // MARK: - Auxiliary Implementation -
 
 open class RepositoryBase<Interface: ProgramInterface, Session: RequestSession>: Repository where Interface.Request == Session.Request {
+    public let cancellables = Cancellables()
+    
     @Published public var interface: Interface {
         didSet {
             session.cancellables.cancel()
