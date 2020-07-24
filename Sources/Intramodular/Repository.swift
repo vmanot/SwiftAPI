@@ -20,8 +20,8 @@ public protocol Repository: ObservableObject {
 extension Repository {
     public func task<E: Endpoint>(
         for endpoint: E
-    ) -> ParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
-        return .init(body: { (task: ParametrizedTask) in
+    ) -> ParametrizedPassthroughTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
+        return ParametrizedPassthroughTask(body: { (task: ParametrizedPassthroughTask) in
             guard let input = task.parameter else {
                 task.send(.error(.missingInput()))
                 
@@ -55,14 +55,14 @@ extension Repository {
     
     public func task<E: Endpoint>(
         for endpointKeypath: KeyPath<Interface, E>
-    ) -> ParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
+    ) -> ParametrizedPassthroughTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
         task(for: interface[keyPath: endpointKeypath])
     }
     
     public func run<E: Endpoint>(
         _ endpoint: E,
         with input: E.Input
-    ) -> Task<E.Output, Interface.Error> where E.Root == Interface {
+    ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
         let result = task(for: endpoint)
         
         result.receive(input)
@@ -70,13 +70,13 @@ extension Repository {
         
         session.cancellables.insert(result)
         
-        return result
+        return result.eraseToAnyTask()
     }
     
     public func run<E: Endpoint>(
         _ endpoint: KeyPath<Interface, E>,
         with input: E.Input
-    ) -> Task<E.Output, Interface.Error> where E.Root == Interface {
+    ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
         run(interface[keyPath: endpoint], with: input)
     }
 }

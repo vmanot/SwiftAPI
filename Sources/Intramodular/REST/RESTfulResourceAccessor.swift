@@ -53,11 +53,11 @@ public final class RESTfulResourceAccessor<
     var _wrappedValue: Value?
     
     @usableFromInline
-    var lastGetTask: Task<GetEndpoint.Output, Root.Error>?
+    var lastGetTask: AnyTask<GetEndpoint.Output, Root.Error>?
     @usableFromInline
     var lastGetTaskResult: TaskResult<Value, Swift.Error>?
     @usableFromInline
-    var lastSetTask: Task<SetEndpoint.Output, Root.Error>?
+    var lastSetTask: AnyTask<SetEndpoint.Output, Root.Error>?
     @usableFromInline
     var lastSetTaskResult: TaskResult<Void, Swift.Error>?
     
