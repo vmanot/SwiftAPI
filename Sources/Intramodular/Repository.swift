@@ -22,7 +22,7 @@ extension Repository {
         for endpoint: E
     ) -> ParametrizedPassthroughTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
         return ParametrizedPassthroughTask(body: { (task: ParametrizedPassthroughTask) in
-            guard let input = task.parameter else {
+            guard let input = task.input else {
                 task.send(.error(.missingInput()))
                 
                 return .empty()
