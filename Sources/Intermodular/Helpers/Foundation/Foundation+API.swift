@@ -15,7 +15,7 @@ extension URLRequest: Request {
 extension URLSession: RequestSession {
     public typealias Request = URLRequest
     
-    public func task(with request: Request) -> DataTaskPublisher {
-        dataTaskPublisher(for: request)
+    public func task(with request: Request) -> AnyTask<DataTaskPublisher.Output, DataTaskPublisher.Failure> {
+        dataTaskPublisher(for: request).eraseToTask()
     }
 }

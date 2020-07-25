@@ -20,7 +20,7 @@ public protocol Repository: ObservableObject {
 extension Repository {
     public func task<E: Endpoint>(
         for endpoint: E
-    ) -> ParametrizedPassthroughTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
+    ) -> AnyParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
         return ParametrizedPassthroughTask(body: { (task: ParametrizedPassthroughTask) in
             guard let input = task.input else {
                 task.send(.error(.missingInput()))
@@ -31,31 +31,39 @@ extension Repository {
             let endpoint = endpoint
             
             do {
-                return try self.session.task(with: endpoint.buildRequest(for: self.interface, from: input)).sinkResult({ [weak task] result in
-                    switch result {
-                        case .success(let value): do {
-                            do {
-                                task?.send(.success(try endpoint.decodeOutput(from: value)))
-                            } catch {
+                return try self
+                    .session
+                    .task(with: endpoint.buildRequest(
+                        for: self.interface,
+                        from: input
+                    ))
+                    .success()
+                    .sinkResult({ [weak task] result in
+                        switch result {
+                            case .success(let value): do {
+                                do {
+                                    task?.send(.success(try endpoint.decodeOutput(from: value)))
+                                } catch {
+                                    task?.send(.error(.init(runtimeError: error)))
+                                }
+                            }
+                            case .failure(let error): do {
                                 task?.send(.error(.init(runtimeError: error)))
                             }
                         }
-                        case .failure(let error): do {
-                            task?.send(.error(.init(runtimeError: error)))
-                        }
-                    }
-                })
+                    })
             } catch {
                 task.send(.error(.init(runtimeError: error)))
                 
                 return AnyCancellable.empty()
             }
         })
+        .eraseToAnyTask()
     }
     
     public func task<E: Endpoint>(
         for endpointKeypath: KeyPath<Interface, E>
-    ) -> ParametrizedPassthroughTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
+    ) -> AnyParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
         task(for: interface[keyPath: endpointKeypath])
     }
     
@@ -65,7 +73,12 @@ extension Repository {
     ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
         let result = task(for: endpoint)
         
-        result.receive(input)
+        do {
+            try result.receive(input)
+        } catch {
+            return .failure(.init(runtimeError: error))
+        }
+        
         result.start()
         
         session.cancellables.insert(result)
