@@ -105,7 +105,11 @@ open class RepositoryBase<Interface: ProgramInterface, Session: RequestSession>:
         }
     }
     
-    @Published public var session: Session
+    @Published public var session: Session {
+        didSet {
+            session.cancellables.cancel()
+        }
+    }
     
     public init(interface: Interface, session: Session) {
         self.interface = interface
