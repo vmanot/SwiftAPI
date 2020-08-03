@@ -58,7 +58,7 @@ extension Repository {
                 return AnyCancellable.empty()
             }
         })
-        .eraseToAnyTask()
+            .eraseToAnyTask()
     }
     
     public func task<E: Endpoint>(
@@ -115,16 +115,22 @@ open class RepositoryBase<Interface: ProgramInterface, Session: RequestSession>:
         self.interface = interface
         self.session = session
     }
-    
-    public convenience init(interface: Interface) where Session: Initiable {
+}
+
+extension RepositoryBase where Session: Initiable {
+    public convenience init(interface: Interface) {
         self.init(interface: interface, session: .init())
     }
-    
-    public convenience init(session: Session) where Interface: Initiable {
+}
+
+extension RepositoryBase where Interface: Initiable {
+    public convenience init(session: Session) {
         self.init(interface: .init(), session: session)
     }
-    
-    public convenience init() where Interface: Initiable, Session: Initiable {
+}
+
+extension RepositoryBase where Interface: Initiable, Session: Initiable {
+    public convenience init() {
         self.init(interface: .init(), session: .init())
     }
 }

@@ -231,11 +231,11 @@ extension RESTfulResourceAccessor {
     }
 }
 
-extension RESTfulResourceAccessor {
+extension RESTfulResourceAccessor where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
     public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>
-    ) where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+    ) {
         self.init(
             get: .init(
                 endpoint: get,
@@ -247,7 +247,9 @@ extension RESTfulResourceAccessor {
             dependencies: []
         )
     }
-    
+}
+
+extension RESTfulResourceAccessor {
     public convenience init<R0: RESTfulResourceAccessorProtocol>(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
@@ -258,7 +260,7 @@ extension RESTfulResourceAccessor {
                 endpoint: get,
                 input: { container in
                     try .init(from: container[keyPath: r0].wrappedValue.unwrap())
-                },
+            },
                 output: { $0 }
             ),
             dependencies: [ResourceDependency(location: r0)],
@@ -357,14 +359,16 @@ extension RESTfulResourceAccessor {
             self.input = input
             self.output = output
         }
-        
-        public init() where Endpoint == NeverEndpoint<Root> {
-            self.init(
-                endpoint: { _ in throw Error.some },
-                input: { _ in throw Error.some },
-                output: Never.materialize
-            )
-        }
+    }
+}
+
+extension RESTfulResourceAccessor.EndpointConstructor where Endpoint == NeverEndpoint<Root> {
+    public init() {
+        self.init(
+            endpoint: { _ in throw RESTfulResourceAccessor.Error.some },
+            input: { _ in throw RESTfulResourceAccessor.Error.some },
+            output: Never.materialize
+        )
     }
 }
 
