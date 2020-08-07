@@ -260,7 +260,7 @@ extension RESTfulResourceAccessor {
                 endpoint: get,
                 input: { container in
                     try .init(from: container[keyPath: r0].wrappedValue.unwrap())
-            },
+                },
                 output: { $0 }
             ),
             dependencies: [ResourceDependency(location: r0)],

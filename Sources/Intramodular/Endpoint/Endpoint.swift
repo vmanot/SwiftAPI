@@ -11,10 +11,13 @@ public protocol Endpoint {
     associatedtype Root: ProgramInterface
     
     /// The endpoint's input.
-    associatedtype Input: Encodable
+    associatedtype Input
     
     /// The endpoint's output.
-    associatedtype Output: Decodable
+    associatedtype Output
+    
+    /// The request type used by the endpoint.
+    typealias Request = Root.Request
     
     /// Build a request.
     ///
@@ -26,6 +29,11 @@ public protocol Endpoint {
     ///
     /// - Parameter response: The request response to decode into the endpoint's output.
     func decodeOutput(from response: Root.Request.Response) throws -> Output
+}
+
+public protocol MutableEndpoint: Endpoint {
+    mutating func addRequestTransform(_ transform: @escaping (Root.Request) throws -> Root.Request)
+    mutating func addRequestTransform(_ transform: @escaping (Input, Root.Request) throws -> Root.Request)
 }
 
 // MARK: - Auxiliary Implementation -

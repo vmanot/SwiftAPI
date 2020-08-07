@@ -7,11 +7,11 @@ import Swift
 
 public protocol ProgramInterface: Identifiable {
     associatedtype Root = Self
-    associatedtype Request: API.Request
+    associatedtype Request: API.Request where Root.Request == Request
     associatedtype Error: ProgramInterfaceError = DefaultProgramInterfaceError<Self> where Error.Interface == Root
     
-    associatedtype Models = ProgramInterfaceModels<Root>
-    associatedtype Endpoints = ProgramInterfaceEndpoints<Root>
+    associatedtype Models = ProgramInterfaceModels<Self>
+    associatedtype Endpoints = ProgramInterfaceEndpoints<Self>
 }
 
 // MARK: - Auxiliary Implementation -
