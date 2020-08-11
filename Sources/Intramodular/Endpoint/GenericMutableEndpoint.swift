@@ -8,39 +8,43 @@ import Swallow
 open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: MutableEndpoint, MutablePropertyWrapper {
     public typealias WrappedValue = GenericMutableEndpoint<Root, Input, Output>
     
-    private var buildRequestImpl: (_ for: Root, _ from: Input) throws -> Root.Request
-    private var decodeOutputImpl: (_ from: Root.Request.Response) throws -> Output
+    private var transformRequest: (_ base: Root.Request, _ for: Root, _ from: Input) throws -> Root.Request = { base, root, input in base }
     
     public var wrappedValue: GenericMutableEndpoint<Root, Input, Output> {
         get {
             self
         } set {
-            self.buildRequestImpl = newValue.buildRequestImpl
-            self.decodeOutputImpl = newValue.decodeOutputImpl
+            self.transformRequest = newValue.transformRequest
         }
     }
     
     public init() {
-        fatalError()
+        
+    }
+    
+    open func buildRequestBase(for root: Root, from input: Input) throws -> Root.Request {
+        throw Never.Reason.unimplemented
     }
     
     public func buildRequest(for root: Root, from input: Input) throws -> Root.Request {
-        try buildRequestImpl(root, input)
+        try buildRequestBase(for: root, from: input)
     }
     
-    public func decodeOutput(from response: Root.Request.Response) throws -> Output {
-        try decodeOutputImpl(response)
+    open func decodeOutput(from response: Root.Request.Response) throws -> Output {
+        throw Never.Reason.unimplemented
     }
-    
-    public func addRequestTransform(_ transform: @escaping (Root.Request) throws -> Root.Request) {
-        let oldImpl = buildRequestImpl
+}
+
+extension GenericMutableEndpoint {
+    public final func addRequestTransform(_ transform: @escaping (Root.Request) throws -> Root.Request) {
+        let oldTransform = transformRequest
         
-        buildRequestImpl = { try transform(oldImpl($0, $1)) }
+        transformRequest = { try transform(oldTransform($0, $1, $2)) }
     }
     
-    public func addRequestTransform(_ transform: @escaping (Input, Root.Request) throws -> Root.Request) {
-        let oldImpl = buildRequestImpl
+    public final func addRequestTransform(_ transform: @escaping (Input, Root.Request) throws -> Root.Request) {
+        let oldTransform = transformRequest
         
-        buildRequestImpl = { try transform($1, oldImpl($0, $1)) }
+        transformRequest = { try transform($2, oldTransform($0, $1, $2)) }
     }
 }
