@@ -4,10 +4,7 @@
 
 import Swallow
 
-@propertyWrapper
-open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: MutableEndpoint, MutablePropertyWrapper {
-    public typealias WrappedValue = GenericMutableEndpoint<Root, Input, Output>
-    
+open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: MutableEndpoint {
     private var transformRequest: (_ base: Root.Request, _ for: Root, _ from: Input) throws -> Root.Request = { base, root, input in base }
     
     public var wrappedValue: GenericMutableEndpoint<Root, Input, Output> {
@@ -23,15 +20,15 @@ open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: Mutabl
     }
     
     open func buildRequestBase(for root: Root, from input: Input) throws -> Root.Request {
-        throw Never.Reason.unimplemented
+        throw Never.Reason.abstract
     }
     
     public func buildRequest(for root: Root, from input: Input) throws -> Root.Request {
-        try buildRequestBase(for: root, from: input)
+        try transformRequest(try buildRequestBase(for: root, from: input), root, input)
     }
     
     open func decodeOutput(from response: Root.Request.Response) throws -> Output {
-        throw Never.Reason.unimplemented
+        throw Never.Reason.abstract
     }
 }
 

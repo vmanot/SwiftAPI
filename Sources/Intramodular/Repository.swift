@@ -62,9 +62,9 @@ extension Repository {
     }
     
     public func task<E: Endpoint>(
-        for endpointKeypath: KeyPath<Interface, E>
+        for endpoint: KeyPath<Interface, E>
     ) -> AnyParametrizedTask<E.Input, E.Output, Interface.Error> where E.Root == Interface {
-        task(for: interface[keyPath: endpointKeypath])
+        task(for: interface[keyPath: endpoint])
     }
     
     public func run<E: Endpoint>(

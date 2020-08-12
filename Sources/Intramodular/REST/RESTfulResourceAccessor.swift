@@ -25,7 +25,7 @@ public protocol RESTfulResourceAccessorProtocol {
 /// This type is responsible for getting/setting resource values and managing their dependencies in a repository.
 @propertyWrapper
 public final class RESTfulResourceAccessor<
-    Value: RESTfulResource,
+    Value,
     Container: Repository,
     Root,
     GetEndpoint: Endpoint,
@@ -249,6 +249,24 @@ extension RESTfulResourceAccessor where GetEndpoint.Input: Initiable, GetEndpoin
     }
 }
 
+extension RESTfulResourceAccessor where GetEndpoint.Input == Void, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>
+    ) {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { _ in () },
+                output: { $0 }
+            ),
+            dependencies: [],
+            set: .init(),
+            dependencies: []
+        )
+    }
+}
+
 extension RESTfulResourceAccessor {
     public convenience init<R0: RESTfulResourceAccessorProtocol>(
         wrappedValue: Value? = nil,
@@ -375,7 +393,7 @@ extension RESTfulResourceAccessor.EndpointConstructor where Endpoint == NeverEnd
 // MARK: - Helpers -
 
 extension Repository where Interface: RESTfulInterface {
-    public typealias Resource<Value: RESTfulResource, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<Value, Self, Interface, GetEndpoint, SetEndpoint> where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
+    public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<Value, Self, Interface, GetEndpoint, SetEndpoint> where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
 }
 
 extension Result {
