@@ -14,9 +14,9 @@ let package = Package(
         .library(name: "API", targets: ["API"])
     ],
     dependencies: [
-        .package(url: "git@github.com:vmanot/Merge.git", .branch("master")),
-        .package(url: "git@github.com:vmanot/Swallow.git", .branch("master")),
-        .package(url: "git@github.com:vmanot/Task.git", .branch("master"))
+        .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
+        .package(url: "https://github.com/vmanot/Swallow.git", .branch("master")),
+        .package(url: "https://github.com/vmanot/Task.git", .branch("master"))
     ],
     targets: [
         .target(
