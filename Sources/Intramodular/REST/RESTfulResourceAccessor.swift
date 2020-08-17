@@ -145,7 +145,7 @@ extension RESTfulResourceAccessor {
             return
         }
         
-        (container.objectWillChange as? opaque_VoidSender)?.send()
+        (container.objectWillChange as? _opaque_VoidSender)?.send()
     }
 }
 

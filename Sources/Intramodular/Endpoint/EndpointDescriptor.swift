@@ -5,6 +5,6 @@
 import Swift
 
 public protocol EndpointDescriptor {
-    associatedtype Input: Encodable
-    associatedtype Output: Decodable
+    associatedtype Input
+    associatedtype Output
 }
