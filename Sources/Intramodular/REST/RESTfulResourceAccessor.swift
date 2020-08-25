@@ -32,11 +32,11 @@ public final class RESTfulResourceAccessor<
     SetEndpoint: Endpoint
 >: RESTfulResourceAccessorProtocol where Container.Interface == Root, GetEndpoint.Root == Root, SetEndpoint.Root == Root {
     @usableFromInline
-    let get: EndpointConstructor<GetEndpoint>
+    let get: EndpointCoordinator<GetEndpoint>
     @usableFromInline
     let getDependencies: [Dependency]
     @usableFromInline
-    let set: EndpointConstructor<SetEndpoint>
+    let set: EndpointCoordinator<SetEndpoint>
     @usableFromInline
     let setDependencies: [Dependency]
     
@@ -62,9 +62,9 @@ public final class RESTfulResourceAccessor<
     var lastSetTaskResult: TaskResult<Void, Swift.Error>?
     
     init(
-        get: EndpointConstructor<GetEndpoint>,
+        get: EndpointCoordinator<GetEndpoint>,
         dependencies getDependencies: [Dependency],
-        set: EndpointConstructor<SetEndpoint>,
+        set: EndpointCoordinator<SetEndpoint>,
         dependencies setDependencies: [Dependency]
     ) {
         self.get = get
@@ -231,6 +231,27 @@ extension RESTfulResourceAccessor {
     }
 }
 
+// MARK: - Initialization -
+
+extension RESTfulResourceAccessor where GetEndpoint.Input: Initiable, SetEndpoint == NeverEndpoint<Root> {
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        _ getValueKeyPath: KeyPath<GetEndpoint.Output, Value>
+    ) {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { _ in .init() },
+                output: { $0[keyPath: getValueKeyPath] }
+            ),
+            dependencies: [],
+            set: .init(),
+            dependencies: []
+        )
+    }
+}
+
 extension RESTfulResourceAccessor where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
     public convenience init(
         wrappedValue: Value? = nil,
@@ -353,7 +374,7 @@ extension RESTfulResourceAccessor {
 }
 
 extension RESTfulResourceAccessor {
-    public struct EndpointConstructor<Endpoint: API.Endpoint> {
+    public struct EndpointCoordinator<Endpoint: API.Endpoint> {
         public let endpoint: (Container) throws -> Endpoint
         public let input: (Container) throws -> Endpoint.Input
         public let output: (Endpoint.Output) throws -> Value
@@ -380,7 +401,7 @@ extension RESTfulResourceAccessor {
     }
 }
 
-extension RESTfulResourceAccessor.EndpointConstructor where Endpoint == NeverEndpoint<Root> {
+extension RESTfulResourceAccessor.EndpointCoordinator where Endpoint == NeverEndpoint<Root> {
     public init() {
         self.init(
             endpoint: { _ in throw RESTfulResourceAccessor.Error.some },
@@ -390,7 +411,7 @@ extension RESTfulResourceAccessor.EndpointConstructor where Endpoint == NeverEnd
     }
 }
 
-// MARK: - Helpers -
+// MARK: - API -
 
 extension Repository where Interface: RESTfulInterface {
     public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<Value, Self, Interface, GetEndpoint, SetEndpoint> where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface

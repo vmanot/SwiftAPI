@@ -7,12 +7,10 @@ import ObjectiveC
 import Swift
 import Task
 
-public protocol RequestSession: Identifiable {
+public protocol RequestSession: CancellablesHolder, Identifiable {
     associatedtype Request: API.Request
     associatedtype RequestTask: Task where RequestTask.Success == Request.Response, RequestTask.Error == Request.Error
-    
-    var cancellables: Cancellables { get }
-    
+        
     func task(with _: Request) -> RequestTask
 }
 

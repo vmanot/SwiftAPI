@@ -16,7 +16,7 @@ public struct ResourceView<Resource, Placeholder: View, Success: View, Failure: 
     public var body: some View {
         Group {
             value.ifSome { result in
-                ResultView(result, successView: successView, failureView: failureView)
+                ResultView(result, success: successView, failure: failureView)
             }.else {
                 placeholder()
             }

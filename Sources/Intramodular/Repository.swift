@@ -13,6 +13,8 @@ public protocol Repository: ObservableObject {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
     
+    typealias Schema = Interface.Schema
+    
     var interface: Interface { get }
     var session: Session { get }
 }
@@ -58,7 +60,7 @@ extension Repository {
                 return AnyCancellable.empty()
             }
         })
-            .eraseToAnyTask()
+        .eraseToAnyTask()
     }
     
     public func task<E: Endpoint>(
@@ -91,6 +93,13 @@ extension Repository {
         with input: E.Input
     ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
         run(interface[keyPath: endpoint], with: input)
+    }
+    
+    public func run<E: Endpoint>(
+        _ endpoint: KeyPath<Interface.Endpoints.Type, E>,
+        with input: E.Input
+    ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
+        run(Interface.Endpoints.self[keyPath: endpoint], with: input)
     }
 }
 
