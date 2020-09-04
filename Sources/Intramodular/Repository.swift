@@ -39,7 +39,7 @@ extension Repository {
                         for: self.interface,
                         from: input
                     ))
-                    .success()
+                    .success
                     .sinkResult({ [weak task] result in
                         switch result {
                             case .success(let value): do {
