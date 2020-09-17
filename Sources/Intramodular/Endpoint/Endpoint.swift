@@ -33,7 +33,8 @@ public protocol Endpoint {
 
 public protocol MutableEndpoint: Endpoint {
     mutating func addRequestTransform(_ transform: @escaping (Root.Request) throws -> Root.Request)
-    mutating func addRequestTransform(_ transform: @escaping (Input, Root.Request) throws -> Root.Request)
+    mutating func addRequestTransform(_ transform: @escaping (Root.Request, Input) throws -> Root.Request)
+    mutating func addRequestTransform(_ transform: @escaping (Root.Request, Root, Input) throws -> Root.Request)
 }
 
 // MARK: - Auxiliary Implementation -

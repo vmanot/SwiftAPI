@@ -39,9 +39,15 @@ extension GenericMutableEndpoint {
         transformRequest = { try transform(oldTransform($0, $1, $2)) }
     }
     
-    public final func addRequestTransform(_ transform: @escaping (Input, Root.Request) throws -> Root.Request) {
+    public final func addRequestTransform(_ transform: @escaping (Root.Request, Input) throws -> Root.Request) {
         let oldTransform = transformRequest
         
-        transformRequest = { try transform($2, oldTransform($0, $1, $2)) }
+        transformRequest = { try transform(oldTransform($0, $1, $2), $2) }
+    }
+    
+    public final func addRequestTransform(_ transform: @escaping (Root.Request, Root, Input) throws -> Root.Request) {
+        let oldTransform = transformRequest
+        
+        transformRequest = { try transform(oldTransform($0, $1, $2), $1, $2) }
     }
 }

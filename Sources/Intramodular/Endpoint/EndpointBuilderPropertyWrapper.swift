@@ -21,7 +21,11 @@ extension EndpointBuilderPropertyWrapper {
         wrappedValue.addRequestTransform(transform)
     }
     
-    public mutating func addRequestTransform(_ transform: @escaping (Base.Input, Base.Root.Request) throws -> Base.Root.Request) {
+    public mutating func addRequestTransform(_ transform: @escaping (Base.Root.Request, Base.Input) throws -> Base.Root.Request) {
+        wrappedValue.addRequestTransform(transform)
+    }
+    
+    public mutating func addRequestTransform(_ transform: @escaping (Base.Root.Request, Base.Root, Base.Input) throws -> Base.Root.Request) {
         wrappedValue.addRequestTransform(transform)
     }
 }
