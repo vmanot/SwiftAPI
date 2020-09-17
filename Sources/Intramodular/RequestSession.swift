@@ -32,7 +32,7 @@ extension RequestSession where Self: AnyObject {
     }
 }
 
-// MARK: - Concrete Implementations -
+// MARK: - Conformances -
 
 public final class AnyRequestSession<R: Request>: Identifiable, ObservableObject, RequestSession {
     private let cancellablesImpl: () -> Cancellables
