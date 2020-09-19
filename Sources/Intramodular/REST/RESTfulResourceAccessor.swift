@@ -119,14 +119,15 @@ public final class RESTfulResourceAccessor<
         
         self._container = container
         self._storageKeyPath = storageKeyPath
-        self._lastRootID = container.interface.id
         
         if isFirstRun {
+            self._lastRootID = container.interface.id
+
             _containerSubscription = container.objectWillChange.receive(on: DispatchQueue.main).sinkResult { [weak self, weak container] _ in
                 guard let `self` = self, let container = container else {
                     return
                 }
-                
+            
                 if self.needsAutomaticGet {
                     self.performGetTask()
                 }
@@ -169,16 +170,16 @@ extension RESTfulResourceAccessor {
             return false
         }
         
+        guard container.interface.id == _lastRootID else {
+            return true
+        }
+
         if let lastGetTaskResult = lastGetTaskResult {
             if lastGetTaskResult == .canceled || lastGetTaskResult == .error {
                 return false
             }
         }
-        
-        guard container.interface.id == _lastRootID else {
-            return true
-        }
-        
+                
         guard lastGetTask == nil else {
             return false
         }
@@ -198,6 +199,7 @@ extension RESTfulResourceAccessor {
         }
         
         do {
+            lastGetTask?.cancel()
             lastGetTask = container.run(try get.endpoint(container), with: try get.input(container))
             lastGetTask?.onResult({ [weak self] result in
                 guard let `self` = self else {
@@ -233,12 +235,12 @@ extension RESTfulResourceAccessor {
 
 // MARK: - Initialization -
 
-extension RESTfulResourceAccessor where GetEndpoint.Input: Initiable, SetEndpoint == NeverEndpoint<Root> {
+extension RESTfulResourceAccessor  {
     public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
         _ getValueKeyPath: KeyPath<GetEndpoint.Output, Value>
-    ) {
+    ) where GetEndpoint.Input: Initiable, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
                 endpoint: get,
@@ -250,13 +252,27 @@ extension RESTfulResourceAccessor where GetEndpoint.Input: Initiable, SetEndpoin
             dependencies: []
         )
     }
-}
-
-extension RESTfulResourceAccessor where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+    
     public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>
-    ) {
+    ) where GetEndpoint.Input: ExpressibleByNilLiteral, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { _ in .init(nilLiteral: ()) },
+                output: { $0 }
+            ),
+            dependencies: [],
+            set: .init(),
+            dependencies: []
+        )
+    }
+    
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>
+    ) where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
                 endpoint: get,
@@ -268,13 +284,11 @@ extension RESTfulResourceAccessor where GetEndpoint.Input: Initiable, GetEndpoin
             dependencies: []
         )
     }
-}
-
-extension RESTfulResourceAccessor where GetEndpoint.Input == Void, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+    
     public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>
-    ) {
+    ) where GetEndpoint.Input == Void, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
                 endpoint: get,
@@ -286,9 +300,24 @@ extension RESTfulResourceAccessor where GetEndpoint.Input == Void, GetEndpoint.O
             dependencies: []
         )
     }
-}
+    
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        from getInput: GetEndpoint.Input
+    ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { _ in getInput },
+                output: { $0 }
+            ),
+            dependencies: [],
+            set: .init(),
+            dependencies: []
+        )
+    }
 
-extension RESTfulResourceAccessor {
     public convenience init<R0: RESTfulResourceAccessorProtocol>(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
