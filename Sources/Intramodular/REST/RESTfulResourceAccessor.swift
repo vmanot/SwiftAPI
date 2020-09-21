@@ -122,12 +122,12 @@ public final class RESTfulResourceAccessor<
         
         if isFirstRun {
             self._lastRootID = container.interface.id
-
+            
             _containerSubscription = container.objectWillChange.receive(on: DispatchQueue.main).sinkResult { [weak self, weak container] _ in
                 guard let `self` = self, let container = container else {
                     return
                 }
-            
+                
                 if self.needsAutomaticGet {
                     self.performGetTask()
                 }
@@ -173,13 +173,13 @@ extension RESTfulResourceAccessor {
         guard container.interface.id == _lastRootID else {
             return true
         }
-
+        
         if let lastGetTaskResult = lastGetTaskResult {
             if lastGetTaskResult == .canceled || lastGetTaskResult == .error {
                 return false
             }
         }
-                
+        
         guard lastGetTask == nil else {
             return false
         }
@@ -317,7 +317,7 @@ extension RESTfulResourceAccessor  {
             dependencies: []
         )
     }
-
+    
     public convenience init<R0: RESTfulResourceAccessorProtocol>(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
