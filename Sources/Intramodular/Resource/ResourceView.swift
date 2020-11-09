@@ -25,8 +25,8 @@ public struct ResourceView<Resource, Placeholder: View, Success: View, Failure: 
 }
 
 extension ResourceView {
-    public init?<Container, Root, GetEndpoint, SetEndpoint>(
-        _ resource: RESTfulResourceAccessor<Resource, Container, Root, GetEndpoint, SetEndpoint>,
+    public init?<Repository, GetEndpoint, SetEndpoint>(
+        _ resource: RESTfulResourceAccessor<Resource, Repository, GetEndpoint, SetEndpoint>,
         success: @escaping (Resource) -> Success,
         failure: @escaping (Error) -> Failure,
         placeholder: @escaping () -> Placeholder
