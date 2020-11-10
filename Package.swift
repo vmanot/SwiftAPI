@@ -14,6 +14,7 @@ let package = Package(
         .library(name: "API", targets: ["API"])
     ],
     dependencies: [
+        .package(url: "https://github.com/vmanot/Compute.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Swallow.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Task.git", .branch("master"))
@@ -22,6 +23,7 @@ let package = Package(
         .target(
             name: "API",
             dependencies: [
+                "Compute",
                 "Merge",
                 "Swallow",
                 "Task"

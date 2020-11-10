@@ -9,20 +9,6 @@ public protocol _opaque_ResourceProtocol {
     func beginResolutionIfNecessary()
 }
 
-public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
-    associatedtype Value
-    
-    var latestValue: Value? { get }
-    
-    func beginResolutionIfNecessary()
-}
-
-public protocol RepositoryResourceProtocol: ResourceProtocol {
-    associatedtype Repository: API.Repository
-    
-    var repository: Repository { get }
-}
-
 public class AnyResource<Value>: ResourceProtocol {
     public let base: _opaque_ResourceProtocol
     public let objectWillChange: AnyObjectWillChangePublisher
