@@ -9,12 +9,23 @@ public protocol EndpointBuilderPropertyWrapper: MutablePropertyWrapper, MutableE
 }
 
 extension EndpointBuilderPropertyWrapper {
-    public func buildRequest(for root: Base.Root, from input: Base.Input) throws -> Base.Root.Request {
-        try wrappedValue.buildRequest(for: root, from: input)
+    public typealias Request = Base.Request
+    
+    public typealias BuildRequestContext = EndpointBuildRequestContext<Base.Root, Base.Input, Base.Output>
+    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Base.Root, Base.Input, Base.Output>
+    
+    public func buildRequest(
+        from input: Input,
+        context: BuildRequestContext
+    ) throws -> Request {
+        try wrappedValue.buildRequest(from: input, context: context)
     }
     
-    public func decodeOutput(from response: Base.Root.Request.Response) throws -> Base.Output {
-        try wrappedValue.decodeOutput(from: response)
+    public func decodeOutput(
+        from response: Request.Response,
+        context: DecodeOutputContext
+    ) throws -> Output {
+        try wrappedValue.decodeOutput(from: response, context: context)
     }
     
     public mutating func addRequestTransform(_ transform: @escaping (Base.Root.Request) throws -> Base.Root.Request) {

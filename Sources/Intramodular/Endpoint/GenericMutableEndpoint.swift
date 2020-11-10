@@ -5,6 +5,11 @@
 import Swallow
 
 open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: MutableEndpoint {
+    public typealias Request = Root.Request
+    
+    public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output>
+    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output>
+    
     private var transformRequest: (_ base: Root.Request, _ for: Root, _ from: Input) throws -> Root.Request = { base, root, input in base }
     
     public var wrappedValue: GenericMutableEndpoint<Root, Input, Output> {
@@ -19,15 +24,24 @@ open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: Mutabl
         
     }
     
-    open func buildRequestBase(for root: Root, from input: Input) throws -> Root.Request {
+    open func buildRequestBase(
+        from input: Input,
+        context: BuildRequestContext
+    ) throws -> Request {
         throw Never.Reason.abstract
     }
     
-    public func buildRequest(for root: Root, from input: Input) throws -> Root.Request {
-        try transformRequest(try buildRequestBase(for: root, from: input), root, input)
+    public func buildRequest(
+        from input: Input,
+        context: BuildRequestContext
+    ) throws -> Request {
+        try transformRequest(try buildRequestBase(from: input, context: context), context.root, input)
     }
     
-    open func decodeOutput(from response: Root.Request.Response) throws -> Output {
+    open func decodeOutput(
+        from response: Request.Response,
+        context: DecodeOutputContext
+    ) throws -> Output {
         throw Never.Reason.abstract
     }
 }
