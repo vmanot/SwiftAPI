@@ -88,6 +88,7 @@ public final class RESTfulResourceAccessor<
         if isFirstRun {
             if let repositoryObjectWillChange = repository.objectWillChange as? _opaque_VoidSender {
                 self.base.objectWillChange
+                    .receiveOnMainQueue()
                     .publish(to: repositoryObjectWillChange)
                     .store(in: cancellables)
             }

@@ -248,7 +248,7 @@ extension RESTfulResource  {
 // MARK: - Protocol Implementations -
 
 extension RESTfulResource {
-    public func refresh() {
+    public func resolve() {
         performGetTask()
     }
     
@@ -257,7 +257,7 @@ extension RESTfulResource {
             return
         }
         
-        refresh()
+        resolve()
     }
 }
 

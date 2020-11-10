@@ -82,9 +82,9 @@ extension Repository {
         }
         
         result.start()
-        
+
         session.cancellables.insert(result)
-        
+
         return result.eraseToAnyTask()
     }
     

@@ -3,9 +3,10 @@
 //
 
 import Merge
-import Swift
+import Swallow
 
 public protocol _opaque_ResourceProtocol {
+    func resolve()
     func beginResolutionIfNecessary()
 }
 
@@ -28,6 +29,10 @@ public class AnyResource<Value>: ResourceProtocol {
         self.publisher = resource.publisher.eraseError().eraseToAnyPublisher()
         
         self.latestValueImpl = { resource.latestValue }
+    }
+    
+    public func resolve() {
+        base.resolve()
     }
     
     public func beginResolutionIfNecessary() {
