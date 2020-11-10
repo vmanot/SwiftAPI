@@ -12,6 +12,7 @@ public protocol _opaque_ResourceProtocol {
 public class AnyResource<Value>: ResourceProtocol {
     public let base: _opaque_ResourceProtocol
     public let objectWillChange: AnyObjectWillChangePublisher
+    public let publisher: AnyPublisher<Optional<Value>, Error>
     
     let latestValueImpl: () -> Value?
     
@@ -24,6 +25,7 @@ public class AnyResource<Value>: ResourceProtocol {
     ) where Resource.Value == Value {
         self.base = resource
         self.objectWillChange = .init(from: resource)
+        self.publisher = resource.publisher.eraseError().eraseToAnyPublisher()
         
         self.latestValueImpl = { resource.latestValue }
     }

@@ -38,20 +38,24 @@ public final class RESTfulResource<
     var _lastRootID: Root.ID?
     
     @usableFromInline
-    var _wrappedValue: Value?
+    @Published var _wrappedValue: Value?
+    
+    public var publisher: AnyPublisher<Optional<Value>, Error> {
+        $_wrappedValue.eraseError().eraseToAnyPublisher()
+    }
     
     public var latestValue: Value? {
         _wrappedValue
     }
     
     @usableFromInline
-    var lastGetTask: AnyTask<GetEndpoint.Output, Root.Error>?
+    @Published var lastGetTask: AnyTask<GetEndpoint.Output, Root.Error>?
     @usableFromInline
-    var lastGetTaskResult: TaskResult<Value, Swift.Error>?
+    @Published var lastGetTaskResult: TaskResult<Value, Swift.Error>?
     @usableFromInline
-    var lastSetTask: AnyTask<SetEndpoint.Output, Root.Error>?
+    @Published var lastSetTask: AnyTask<SetEndpoint.Output, Root.Error>?
     @usableFromInline
-    var lastSetTaskResult: TaskResult<Void, Swift.Error>?
+    @Published var lastSetTaskResult: TaskResult<Void, Swift.Error>?
     
     init(
         get: EndpointCoordinator<GetEndpoint>,
@@ -129,8 +133,6 @@ extension RESTfulResource {
         } catch {
             lastGetTaskResult = .error(error)
         }
-        
-        objectWillChange.send()
     }
     
     func receiveGetTaskResult(_ result: TaskResult<GetEndpoint.Output, Root.Error>) {
@@ -144,8 +146,6 @@ extension RESTfulResource {
         }
         
         _wrappedValue = lastGetTaskResult?.successValue
-        
-        objectWillChange.send()
     }
 }
 
