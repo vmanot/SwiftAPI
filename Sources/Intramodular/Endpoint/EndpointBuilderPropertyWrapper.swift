@@ -28,15 +28,9 @@ extension EndpointBuilderPropertyWrapper {
         try wrappedValue.decodeOutput(from: response, context: context)
     }
     
-    public mutating func addRequestTransform(_ transform: @escaping (Base.Root.Request) throws -> Base.Root.Request) {
-        wrappedValue.addRequestTransform(transform)
-    }
-    
-    public mutating func addRequestTransform(_ transform: @escaping (Base.Root.Request, Base.Input) throws -> Base.Root.Request) {
-        wrappedValue.addRequestTransform(transform)
-    }
-    
-    public mutating func addRequestTransform(_ transform: @escaping (Base.Root.Request, Base.Root, Base.Input) throws -> Base.Root.Request) {
-        wrappedValue.addRequestTransform(transform)
+    public func addBuildRequestTransform(
+        _ transform: @escaping (Request, BuildRequestTransformContext) throws -> Request
+    ) {
+        wrappedValue.addBuildRequestTransform(transform)
     }
 }

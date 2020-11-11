@@ -18,7 +18,7 @@ public protocol Endpoint: AnyProtocol {
     
     /// The request type used by the endpoint.
     typealias Request = Root.Request
-        
+    
     /// Build a request.
     ///
     /// - Parameter root: The API that this endpoint belongs to.
@@ -35,17 +35,6 @@ public protocol Endpoint: AnyProtocol {
         from response: Request.Response,
         context: EndpointDecodeOutputContext<Self.Root, Self.Input, Self.Output>
     ) throws -> Output
-}
-
-public protocol MutableEndpoint: Endpoint {
-    mutating func addRequestTransform(_ transform: @escaping (Root.Request) throws -> Root.Request)
-    mutating func addRequestTransform(_ transform: @escaping (Root.Request, Input) throws -> Root.Request)
-    mutating func addRequestTransform(_ transform: @escaping (Root.Request, Root, Input) throws -> Root.Request)
-}
-
-extension MutableEndpoint {
-    public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output>
-    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output>
 }
 
 // MARK: - Auxiliary Implementation -
