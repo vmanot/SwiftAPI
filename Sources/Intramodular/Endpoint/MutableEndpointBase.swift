@@ -4,15 +4,16 @@
 
 import Swallow
 
-open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: MutableEndpoint {
+open class MutableEndpointBase<Root: ProgramInterface, Input, Output>: MutableEndpoint {
     public typealias Request = Root.Request
     
     public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output>
     public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output>
     
     private var buildRequestTransform: (_ request: Root.Request, _ context: BuildRequestTransformContext) throws -> Root.Request = { request, context in request }
+    private var outputTransform: (_ output: Output, _ context: TransformOutputContext) throws -> Output = { output, context in output }
     
-    public var wrappedValue: GenericMutableEndpoint<Root, Input, Output> {
+    public var wrappedValue: MutableEndpointBase<Root, Input, Output> {
         get {
             self
         } set {
@@ -24,6 +25,10 @@ open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: Mutabl
         
     }
     
+    public init<Descriptor: EndpointDescriptor>(_ descriptor: Descriptor.Type) where Descriptor.Input == Input, Descriptor.Output == Output {
+        
+    }
+    
     open func buildRequestBase(
         from input: Input,
         context: BuildRequestContext
@@ -31,20 +36,27 @@ open class GenericMutableEndpoint<Root: ProgramInterface, Input, Output>: Mutabl
         throw Never.Reason.abstract
     }
     
-    public func buildRequest(
+    open func decodeOutputBase(
+        from response: Request.Response,
+        context: DecodeOutputContext
+    ) throws -> Output {
+        throw Never.Reason.abstract
+    }
+    
+    public final func buildRequest(
         from input: Input,
         context: BuildRequestContext
     ) throws -> Request {
         try buildRequestTransform(try buildRequestBase(from: input, context: context), .init(root: context.root, input: input))
     }
     
-    open func decodeOutput(
+    public final func decodeOutput(
         from response: Request.Response,
         context: DecodeOutputContext
     ) throws -> Output {
-        throw Never.Reason.abstract
+        try outputTransform(try decodeOutputBase(from: response, context: context), .init(root: context.root, input: context.input))
     }
-
+    
     public final func addBuildRequestTransform(
         _ transform: @escaping (Request, BuildRequestTransformContext) throws -> Request
     ) {

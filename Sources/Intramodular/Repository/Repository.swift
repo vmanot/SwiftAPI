@@ -9,6 +9,7 @@ import Task
 /// A data repository.
 ///
 /// The combination of a program interface and a compatible request session.
+@dynamicMemberLookup
 public protocol Repository: ObservableObject {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
@@ -18,6 +19,20 @@ public protocol Repository: ObservableObject {
     var interface: Interface { get }
     var session: Session { get }
 }
+
+// MARK: - Implementation -
+
+extension Repository {
+    public subscript<Endpoint: API.Endpoint>(
+        dynamicMember keyPath: KeyPath<Interface, Endpoint>
+    ) -> RunEndpointFunction<Endpoint> where Endpoint.Root == Interface {
+        .init {
+            self.run(keyPath, with: $0)
+        }
+    }
+}
+
+// MARK: - Extensions -
 
 extension Repository {
     public func task<E: Endpoint>(
@@ -82,9 +97,9 @@ extension Repository {
         }
         
         result.start()
-
+        
         session.cancellables.insert(result)
-
+        
         return result.eraseToAnyTask()
     }
     
@@ -105,45 +120,6 @@ extension Repository {
 
 // MARK: - Auxiliary Implementation -
 
-open class RepositoryBase<Interface: ProgramInterface, Session: RequestSession>: Repository where Interface.Request == Session.Request {
-    public let cancellables = Cancellables()
-    
-    @Published public var interface: Interface {
-        didSet {
-            session.cancellables.cancel()
-        }
-    }
-    
-    @Published public var session: Session {
-        didSet {
-            session.cancellables.cancel()
-        }
-    }
-    
-    public init(interface: Interface, session: Session) {
-        self.interface = interface
-        self.session = session
-    }
-}
-
-extension RepositoryBase where Session: Initiable {
-    public convenience init(interface: Interface) {
-        self.init(interface: interface, session: .init())
-    }
-}
-
-extension RepositoryBase where Interface: Initiable {
-    public convenience init(session: Session) {
-        self.init(interface: .init(), session: session)
-    }
-}
-
-extension RepositoryBase where Interface: Initiable, Session: Initiable {
-    public convenience init() {
-        self.init(interface: .init(), session: .init())
-    }
-}
-
 private enum _DefaultRepositoryError: Error {
     case missingInput
     case invalidInput
@@ -161,5 +137,13 @@ private extension ProgramInterfaceError {
     
     static func invalidOutput() -> Self {
         .init(runtimeError: _DefaultRepositoryError.invalidOutput)
+    }
+}
+
+public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
+    let run: (Endpoint.Input) -> AnyTask<Endpoint.Output, Endpoint.Root.Error>
+    
+    public func callAsFunction(_ input: (Endpoint.Input)) -> some Task {
+        run(input)
     }
 }
