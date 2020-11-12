@@ -7,7 +7,7 @@ import Swift
 public protocol MutableEndpoint: Endpoint {
     typealias BuildRequestTransformContext = TransformMutableEndpointBuildRequestContext<Root, Input, Output>
     typealias TransformOutputContext = TransformMutableEndpointOutputContext<Root, Input, Output>
-
+    
     func addBuildRequestTransform(
         _ transform: @escaping (Request, TransformMutableEndpointBuildRequestContext<Root, Input, Output>) throws -> Request
     )

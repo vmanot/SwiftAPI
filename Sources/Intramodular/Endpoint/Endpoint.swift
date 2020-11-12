@@ -50,10 +50,12 @@ public struct EndpointBuildRequestContext<Root: ProgramInterface, Input, Output>
 public struct EndpointDecodeOutputContext<Root: ProgramInterface, Input, Output> {
     public let root: Root
     public let input: Input
-    
-    public init(root: Root, input: Input) {
+    public let request: Root.Request
+
+    public init(root: Root, input: Input, request: Root.Request) {
         self.root = root
         self.input = input
+        self.request = request
     }
 }
 

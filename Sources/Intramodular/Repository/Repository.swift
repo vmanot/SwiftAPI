@@ -48,18 +48,20 @@ extension Repository {
             let endpoint = endpoint
             
             do {
-                return try self
+                let request = try endpoint.buildRequest(
+                    from: input,
+                    context: .init(root: self.interface)
+                )
+                
+                return self
                     .session
-                    .task(with: endpoint.buildRequest(
-                        from: input,
-                        context: .init(root: self.interface)
-                    ))
+                    .task(with: request)
                     .successPublisher
                     .sinkResult({ [weak task] result in
                         switch result {
                             case .success(let value): do {
                                 do {
-                                    task?.send(.success(try endpoint.decodeOutput(from: value, context: .init(root: self.interface, input: input))))
+                                    task?.send(.success(try endpoint.decodeOutput(from: value, context: .init(root: self.interface, input: input, request: request))))
                                 } catch {
                                     task?.send(.error(.init(runtimeError: error)))
                                 }
