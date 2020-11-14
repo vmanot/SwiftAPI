@@ -5,11 +5,6 @@
 import Merge
 import Swallow
 
-public protocol _opaque_ResourceProtocol {
-    func resolve()
-    func beginResolutionIfNecessary()
-}
-
 public class AnyResource<Value>: ResourceProtocol {
     public let base: _opaque_ResourceProtocol
     public let objectWillChange: AnyObjectWillChangePublisher
@@ -35,7 +30,7 @@ public class AnyResource<Value>: ResourceProtocol {
         base.resolve()
     }
     
-    public func beginResolutionIfNecessary() {
-        base.beginResolutionIfNecessary()
+    public func fetchIfNecessary() {
+        base.fetchIfNecessary()
     }
 }

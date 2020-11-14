@@ -252,7 +252,7 @@ extension RESTfulResource {
         performGetTask()
     }
     
-    public func beginResolutionIfNecessary() {
+    public func fetchIfNecessary() {
         guard _wrappedValue == nil else {
             return
         }
