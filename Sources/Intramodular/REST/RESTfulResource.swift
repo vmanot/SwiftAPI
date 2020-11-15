@@ -40,8 +40,14 @@ public final class RESTfulResource<
     @usableFromInline
     @Published var _wrappedValue: Value?
     
-    public var publisher: AnyPublisher<Optional<Value>, Error> {
-        $_wrappedValue.eraseError().eraseToAnyPublisher()
+    public var publisher: AnyPublisher<Result<Value, Error>, Never> {
+        TODO.here(.fix)
+        
+        return $_wrappedValue
+            .compactMap({ $0 })
+            .eraseError()
+            .toResultPublisher()
+            .eraseToAnyPublisher()
     }
     
     public var latestValue: Value? {

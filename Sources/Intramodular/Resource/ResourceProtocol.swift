@@ -13,7 +13,7 @@ public protocol _opaque_ResourceProtocol {
 
 public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
     associatedtype Value
-    associatedtype ValuePublisher: Publisher where ValuePublisher.Output == Optional<Value>
+    associatedtype ValuePublisher: Publisher where ValuePublisher.Output == Result<Value, Error>, ValuePublisher.Failure == Never
     
     var publisher: ValuePublisher { get }
     

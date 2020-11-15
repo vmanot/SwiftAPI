@@ -194,42 +194,6 @@ extension RESTfulResourceAccessor  {
             dependencies: []
         )
     }
-    
-    public convenience init<R0: ResourceAccessor>(
-        wrappedValue: Value? = nil,
-        get: KeyPath<Root, GetEndpoint>,
-        from r0: KeyPath<Container, R0>
-    ) where GetEndpoint.Input: RESTfulResourceValueConstructible, GetEndpoint.Input.ResourceValue == R0.Value, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
-        self.init(
-            get: .init(
-                endpoint: get,
-                input: { repository in
-                    try .init(from: repository[keyPath: r0].wrappedValue.unwrap())
-                },
-                output: { $0 }
-            ),
-            dependencies: [ResourceDependency(location: r0)],
-            set: .init(),
-            dependencies: []
-        )
-    }
-}
-
-// MARK: - Auxiliary Implementation -
-
-extension RESTfulResourceAccessor {
-    @usableFromInline
-    final class ResourceDependency<R: ResourceAccessor>: Resource.Dependency {
-        let location: KeyPath<Container, R>
-        
-        init(location: KeyPath<Container, R>) {
-            self.location = location
-        }
-        
-        override func isAvailable(in repository: Container) -> Bool {
-            repository[keyPath: location].wrappedValue != nil
-        }
-    }
 }
 
 // MARK: - API -
@@ -256,6 +220,23 @@ extension Result {
                 }
             }
             
+        }
+    }
+}
+
+// MARK: - Auxiliary Implementation -
+
+extension RESTfulResourceAccessor {
+    @usableFromInline
+    final class ResourceDependency<R: ResourceAccessor>: Resource.Dependency {
+        let location: KeyPath<Container, R>
+        
+        init(location: KeyPath<Container, R>) {
+            self.location = location
+        }
+        
+        override func isAvailable(in repository: Container) -> Bool {
+            repository[keyPath: location].wrappedValue != nil
         }
     }
 }
