@@ -101,7 +101,7 @@ public final class RESTfulResourceAccessor<
                 }
                 
                 if self.base.needsAutomaticGet {
-                    self.base.performGetTask()
+                    self.base.fetch()
                 }
                 
                 self.base._lastRootID = repository.interface.id

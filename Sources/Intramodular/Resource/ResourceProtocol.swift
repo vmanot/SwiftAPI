@@ -5,10 +5,10 @@
 import Combine
 import Merge
 import Swift
+import Task
 
 public protocol _opaque_ResourceProtocol {
-    func resolve()
-    func fetchIfNecessary()
+    
 }
 
 public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
@@ -19,7 +19,7 @@ public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
     
     var latestValue: Value? { get }
     
-    func fetchIfNecessary()
+    func fetch() -> AnyTask<Value, Error>
 }
 
 public protocol RepositoryResourceProtocol: ResourceProtocol {

@@ -107,34 +107,6 @@ extension RESTfulResource {
         return _wrappedValue == nil
     }
     
-    func performGetTask() {
-        guard let repository = _repository else {
-            assertionFailure()
-            
-            return
-        }
-        
-        guard getDependenciesAreMet else {
-            return
-        }
-        
-        do {
-            lastGetTask?.cancel()
-            lastGetTask = repository.run(try get.endpoint(repository), with: try get.input(repository))
-            lastGetTask?.onResult({ [weak self] result in
-                guard let `self` = self else {
-                    return
-                }
-                
-                DispatchQueue.asyncOnMainIfNecessary {
-                    `self`.receiveGetTaskResult(result)
-                }
-            })
-        } catch {
-            lastGetTaskResult = .error(error)
-        }
-    }
-    
     func receiveGetTaskResult(_ result: TaskResult<GetEndpoint.Output, Root.Error>) {
         do {
             lastGetTask = nil
@@ -245,19 +217,48 @@ extension RESTfulResource  {
     }
 }
 
-// MARK: - Protocol Implementations -
+// MARK: - Protocol Conformances -
 
 extension RESTfulResource {
-    public func resolve() {
-        performGetTask()
-    }
-    
-    public func fetchIfNecessary() {
-        guard _wrappedValue == nil else {
-            return
+    @discardableResult
+    public func fetch() -> AnyTask<Value, Error> {
+        guard let repository = _repository else {
+            assertionFailure()
+            
+            return .failure(RESTfulResourceError.dependenciesAreNotMet)
         }
         
-        resolve()
+        guard getDependenciesAreMet else {
+            return .failure(RESTfulResourceError.dependenciesAreNotMet)
+        }
+        
+        do {
+            lastGetTask?.cancel()
+            
+            let task = repository.run(try get.endpoint(repository), with: try get.input(repository))
+            
+            self.lastGetTask = task
+            
+            let resultTask = PassthroughTask<Value, Error>()
+            
+            task.onResult({ [weak self] result in
+                guard let `self` = self else {
+                    return
+                }
+                
+                DispatchQueue.asyncOnMainIfNecessary {
+                    `self`.receiveGetTaskResult(result)
+                    
+                    resultTask.send(status: .init(self.lastGetTaskResult!))
+                }
+            })
+            
+            return resultTask.eraseToAnyTask()
+        } catch {
+            lastGetTaskResult = .error(error)
+            
+            return .failure(error)
+        }
     }
 }
 
@@ -326,4 +327,10 @@ extension RESTfulResource.EndpointCoordinator where Endpoint == NeverEndpoint<Re
             output: Never.materialize
         )
     }
+}
+
+// MARK: - Auxiliary Implementation -
+
+enum RESTfulResourceError: Error {
+    case dependenciesAreNotMet
 }

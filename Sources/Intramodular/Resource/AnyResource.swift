@@ -4,6 +4,7 @@
 
 import Merge
 import Swallow
+import Task
 
 public class AnyResource<Value>: ResourceProtocol {
     public let base: _opaque_ResourceProtocol
@@ -11,6 +12,7 @@ public class AnyResource<Value>: ResourceProtocol {
     public let publisher: AnyPublisher<Optional<Value>, Error>
     
     let latestValueImpl: () -> Value?
+    let fetchImpl: () -> AnyTask<Value, Error>
     
     public var latestValue: Value? {
         latestValueImpl()
@@ -24,13 +26,11 @@ public class AnyResource<Value>: ResourceProtocol {
         self.publisher = resource.publisher.eraseError().eraseToAnyPublisher()
         
         self.latestValueImpl = { resource.latestValue }
+        self.fetchImpl = resource.fetch
     }
     
-    public func resolve() {
-        base.resolve()
-    }
-    
-    public func fetchIfNecessary() {
-        base.fetchIfNecessary()
+    @discardableResult
+    public func fetch() -> AnyTask<Value, Error> {
+        fetchImpl()
     }
 }
