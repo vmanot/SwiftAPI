@@ -4,15 +4,15 @@
 
 import Swallow
 
-public protocol EndpointBuilderPropertyWrapper: MutablePropertyWrapper, MutableEndpoint where WrappedValue == Base, Root == Base.Root, Input == Base.Input, Output == Base.Output  {
+public protocol EndpointBuilderPropertyWrapper: MutablePropertyWrapper, MutableEndpoint where WrappedValue == Base, Root == Base.Root, Input == Base.Input, Output == Base.Output, Options == Base.Options {
     associatedtype Base: MutableEndpoint
 }
 
 extension EndpointBuilderPropertyWrapper {
     public typealias Request = Base.Request
     
-    public typealias BuildRequestContext = EndpointBuildRequestContext<Base.Root, Base.Input, Base.Output>
-    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Base.Root, Base.Input, Base.Output>
+    public typealias BuildRequestContext = EndpointBuildRequestContext<Base.Root, Base.Input, Base.Output, Base.Options>
+    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Base.Root, Base.Input, Base.Output, Base.Options>
     
     public func buildRequest(
         from input: Input,

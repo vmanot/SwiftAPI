@@ -148,4 +148,8 @@ public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
     public func callAsFunction(_ input: (Endpoint.Input)) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> {
         run(input)
     }
+    
+    public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input: ExpressibleByNilLiteral {
+        run(nil)
+    }
 }

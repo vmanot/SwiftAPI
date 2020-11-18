@@ -6,7 +6,7 @@ import Merge
 import Swallow
 import Task
 
-public struct AnyRepository<Interface: ProgramInterface, Session: RequestSession> {
+public final class AnyRepository<Interface: ProgramInterface, Session: RequestSession>: Repository where Interface.Request == Session.Request {
     private let getInterface: () -> Interface
     private let getSession: () -> Session
     

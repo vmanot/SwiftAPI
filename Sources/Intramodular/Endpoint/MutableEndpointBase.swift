@@ -4,16 +4,16 @@
 
 import Swallow
 
-open class MutableEndpointBase<Root: ProgramInterface, Input, Output>: MutableEndpoint {
+open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: MutableEndpoint, Initiable {
     public typealias Request = Root.Request
     
-    public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output>
-    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output>
+    public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>
+    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output, Options>
     
     private var buildRequestTransform: (_ request: Root.Request, _ context: BuildRequestTransformContext) throws -> Root.Request = { request, context in request }
     private var outputTransform: (_ output: Output, _ context: TransformOutputContext) throws -> Output = { output, context in output }
     
-    public var wrappedValue: MutableEndpointBase<Root, Input, Output> {
+    public var wrappedValue: MutableEndpointBase<Root, Input, Output, Options> {
         get {
             self
         } set {
@@ -21,11 +21,11 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output>: MutableEn
         }
     }
     
-    public init() {
+    public required init() {
         
     }
     
-    public init<Descriptor: EndpointDescriptor>(_ descriptor: Descriptor.Type) where Descriptor.Input == Input, Descriptor.Output == Output {
+    public required init<Descriptor: EndpointDescriptor>(_ descriptor: Descriptor.Type) where Descriptor.Input == Input, Descriptor.Output == Output, Options == Void? {
         
     }
     

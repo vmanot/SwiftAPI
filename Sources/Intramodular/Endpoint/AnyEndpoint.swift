@@ -5,16 +5,16 @@
 import Merge
 import Swift
 
-public struct AnyEndpoint<Root: ProgramInterface, Input, Output>: Endpoint {
+public struct AnyEndpoint<Root: ProgramInterface, Input, Output, Options>: Endpoint {
     public typealias Request = Root.Request
-    
-    public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output>
-    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output>
+
+    public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>
+    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output, Options>
 
     private var buildRequestImpl: (_ from: Input, _ context: BuildRequestContext) throws -> Root.Request
     private var decodeOutputImpl: (_ from: Root.Request.Response, _ context: DecodeOutputContext) throws -> Output
     
-    public init<E: Endpoint>(_ endpoint: E) where E.Root == Root, E.Input == Input, E.Output == Output {
+    public init<E: Endpoint>(_ endpoint: E) where E.Root == Root, E.Input == Input, E.Output == Output, E.Options == Options {
         self.buildRequestImpl = {
             try endpoint.buildRequest(from: $0, context: $1)
         }

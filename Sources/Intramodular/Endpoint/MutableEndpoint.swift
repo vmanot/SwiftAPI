@@ -14,8 +14,8 @@ public protocol MutableEndpoint: Endpoint {
 }
 
 extension MutableEndpoint {
-    public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output>
-    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output>
+    public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>
+    public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output, Options>
 }
 
 // MARK: - Auxiliary Implementation -
