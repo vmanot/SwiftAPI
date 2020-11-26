@@ -96,6 +96,6 @@ public struct NeverEndpoint<Root: ProgramInterface>: Endpoint {
         from response: Request.Response,
         context: DecodeOutputContext
     ) throws -> Output {
-        throw Never.materialize(reason: .impossible)
+        fatalError(reason: .impossible)
     }
 }

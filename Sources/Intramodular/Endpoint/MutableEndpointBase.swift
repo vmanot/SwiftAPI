@@ -25,7 +25,7 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
         
     }
     
-    public required init<Descriptor: EndpointDescriptor>(_ descriptor: Descriptor.Type) where Descriptor.Input == Input, Descriptor.Output == Output, Options == Void? {
+    public required init<Descriptor: EndpointDescriptor>(_ descriptor: Descriptor.Type) where Descriptor.Input == Input, Descriptor.Output == Output, Options == Void {
         
     }
     
