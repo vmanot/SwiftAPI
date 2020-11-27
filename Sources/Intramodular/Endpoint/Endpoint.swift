@@ -5,16 +5,6 @@
 import Combine
 import Swallow
 
-public struct DefaultEndpointOptions: ExpressibleByNilLiteral {
-    public init() {
-        
-    }
-    
-    public init(nilLiteral: Void) {
-        
-    }
-}
-
 /// An type that represents an API's endpoint.
 public protocol Endpoint: AnyProtocol {
     /// The API this endpoint is associated to.
@@ -26,10 +16,12 @@ public protocol Endpoint: AnyProtocol {
     associatedtype Output
     
     /// The endpoint's options.
-    associatedtype Options = DefaultEndpointOptions
+    associatedtype Options
     
     /// The request type used by the endpoint.
     typealias Request = Root.Request
+    
+    func makeDefaultOptions() throws -> Options
     
     /// Build a request.
     ///
@@ -49,13 +41,47 @@ public protocol Endpoint: AnyProtocol {
     ) throws -> Output
 }
 
+// MARK: - Implementation -
+
+extension Endpoint {
+    public func makeDefaultOptions() throws -> Options {
+        if Options.self == Void.self {
+            return () as! Options
+        } else if let optionsType = Options.self as? ExpressibleByNilLiteral.Type {
+            return optionsType.init(nilLiteral: ()) as! Options
+        } else if let optionsType = Options.self as? Initiable.Type {
+            return optionsType.init() as! Options
+        } else {
+            throw Never.Reason.unimplemented
+        }
+    }
+}
+
+// MARK: - API -
+
+extension Endpoint {
+    public func input(_ type: Input.Type) -> Self {
+        return self
+    }
+    
+    public func input(_ type: Input.Type) -> Self where Options == Void {
+        return self
+    }
+    
+    public func output(_ type: Output.Type) -> Self where Options == Void {
+        return self
+    }
+}
+
 // MARK: - Auxiliary Implementation -
 
 public struct EndpointBuildRequestContext<Root: ProgramInterface, Input, Output, Options> {
     public let root: Root
+    public let options: Options
     
-    public init(root: Root) {
+    public init(root: Root, options: Options) {
         self.root = root
+        self.options = options
     }
 }
 
@@ -75,7 +101,7 @@ public struct EndpointDecodeOutputContext<Root: ProgramInterface, Input, Output,
 public struct NeverEndpoint<Root: ProgramInterface>: Endpoint {
     public typealias Input = Never
     public typealias Output = Never
-    public typealias Options = DefaultEndpointOptions
+    public typealias Options = Void
     public typealias Request = Root.Request
     
     public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>

@@ -241,8 +241,12 @@ extension RESTfulResource {
         do {
             lastGetTask?.cancel()
             
-            let task = repository.run(try get.endpoint(repository), with: try get.input(repository))
-            
+            let task = repository.run(
+                try get.endpoint(repository),
+                with: try get.input(repository),
+                options: try get.endpoint(repository).makeDefaultOptions()
+            )
+
             self.lastGetTask = task
             
             let resultTask = PassthroughTask<Value, Error>()

@@ -25,7 +25,17 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
         
     }
     
-    public required init<Descriptor: EndpointDescriptor>(_ descriptor: Descriptor.Type) where Descriptor.Input == Input, Descriptor.Output == Output, Options == Void {
+    public required init<Descriptor: EndpointDescriptor>(
+        _ descriptor: Descriptor.Type
+    ) where Descriptor.Input == Input, Descriptor.Output == Output, Options == Void {
+        
+    }
+    
+    public required init(
+        input: Input.Type,
+        output: Output.Type,
+        options: Options.Type
+    ) {
         
     }
     
@@ -58,10 +68,14 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
     }
     
     public final func addBuildRequestTransform(
-        _ transform: @escaping (Request, BuildRequestTransformContext) throws -> Request
+        _ transform: @escaping (Request, TransformMutableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
     ) {
         let oldTransform = buildRequestTransform
         
         buildRequestTransform = { try transform(oldTransform($0, $1), $1) }
+    }
+    
+    public func makeDefaultOptions() throws -> Options {
+        throw Never.Reason.unimplemented
     }
 }

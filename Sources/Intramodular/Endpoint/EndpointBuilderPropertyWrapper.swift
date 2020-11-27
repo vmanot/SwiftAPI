@@ -14,6 +14,10 @@ extension EndpointBuilderPropertyWrapper {
     public typealias BuildRequestContext = EndpointBuildRequestContext<Base.Root, Base.Input, Base.Output, Base.Options>
     public typealias DecodeOutputContext = EndpointDecodeOutputContext<Base.Root, Base.Input, Base.Output, Base.Options>
     
+    public func makeDefaultOptions() throws -> Options {
+        try wrappedValue.makeDefaultOptions()
+    }
+    
     public func buildRequest(
         from input: Input,
         context: BuildRequestContext

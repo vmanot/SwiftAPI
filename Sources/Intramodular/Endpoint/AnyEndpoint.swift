@@ -24,6 +24,10 @@ public struct AnyEndpoint<Root: ProgramInterface, Input, Output, Options>: Endpo
         }
     }
     
+    public func makeDefaultOptions() throws -> Options {
+        throw Never.Reason.unavailable
+    }
+    
     public func buildRequest(
         from input: Input,
         context: BuildRequestContext
