@@ -10,6 +10,12 @@ public protocol RequestPageToken: Codable & Hashable {
     
 }
 
+public protocol HasRequestPageToken {
+    associatedtype PageToken: RequestPageToken
+    
+    var pageToken: PageToken? { get set }
+}
+
 // MARK: - Conformances -
 
 public struct PageTokenValue<Data: Codable & Hashable>: RequestPageToken {

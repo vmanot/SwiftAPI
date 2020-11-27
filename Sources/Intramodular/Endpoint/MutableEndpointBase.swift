@@ -57,7 +57,7 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
         from input: Input,
         context: BuildRequestContext
     ) throws -> Request {
-        try buildRequestTransform(try buildRequestBase(from: input, context: context), .init(root: context.root, input: input))
+        try buildRequestTransform(try buildRequestBase(from: input, context: context), .init(root: context.root, input: input, options: context.options))
     }
     
     public final func decodeOutput(

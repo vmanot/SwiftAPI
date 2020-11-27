@@ -246,7 +246,7 @@ extension RESTfulResource {
                 with: try get.input(repository),
                 options: try get.endpoint(repository).makeDefaultOptions()
             )
-
+            
             self.lastGetTask = task
             
             let resultTask = PassthroughTask<Value, Error>()

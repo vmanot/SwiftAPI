@@ -23,6 +23,7 @@ extension MutableEndpoint {
 public struct TransformMutableEndpointBuildRequestContext<Root: ProgramInterface, Input, Output, Options> {
     public let root: Root
     public let input: Input
+    public let options: Options
 }
 
 public struct TransformMutableEndpointOutputContext<Root: ProgramInterface, Input, Output, Options> {
