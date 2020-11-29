@@ -30,7 +30,7 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
     ) where Descriptor.Input == Input, Descriptor.Output == Output, Options == Descriptor.Options {
         
     }
-        
+    
     open func buildRequestBase(
         from input: Input,
         context: BuildRequestContext
@@ -65,9 +65,5 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
         let oldTransform = buildRequestTransform
         
         buildRequestTransform = { try transform(oldTransform($0, $1), $1) }
-    }
-    
-    public func makeDefaultOptions() throws -> Options {
-        throw Never.Reason.unimplemented
     }
 }
