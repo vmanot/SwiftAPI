@@ -7,14 +7,19 @@ import Swift
 
 public struct AnyEndpoint<Root: ProgramInterface, Input, Output, Options>: Endpoint {
     public typealias Request = Root.Request
-
+    
     public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>
     public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output, Options>
-
+    
+    private var makeDefaultOptionsImpl: () throws -> Options
     private var buildRequestImpl: (_ from: Input, _ context: BuildRequestContext) throws -> Root.Request
     private var decodeOutputImpl: (_ from: Root.Request.Response, _ context: DecodeOutputContext) throws -> Output
     
     public init<E: Endpoint>(_ endpoint: E) where E.Root == Root, E.Input == Input, E.Output == Output, E.Options == Options {
+        self.makeDefaultOptionsImpl = {
+            try endpoint.makeDefaultOptions()
+        }
+        
         self.buildRequestImpl = {
             try endpoint.buildRequest(from: $0, context: $1)
         }
@@ -25,7 +30,7 @@ public struct AnyEndpoint<Root: ProgramInterface, Input, Output, Options>: Endpo
     }
     
     public func makeDefaultOptions() throws -> Options {
-        throw Never.Reason.unavailable
+        try makeDefaultOptionsImpl()
     }
     
     public func buildRequest(

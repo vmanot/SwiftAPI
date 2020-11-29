@@ -18,29 +18,18 @@ public protocol Repository: ObservableObject {
     
     var interface: Interface { get }
     var session: Session { get }
+    
+    func task<Input, Output, Options>(
+        for endpoint: AnyEndpoint<Interface, Input, Output, Options>
+    ) -> AnyParametrizedTask<(input: Input, options: Options), Output, Interface.Error>
 }
 
 // MARK: - Implementation -
 
 extension Repository {
-    public subscript<Endpoint: API.Endpoint>(
-        dynamicMember keyPath: KeyPath<Interface, Endpoint>
-    ) -> RunEndpointFunction<Endpoint> where Endpoint.Root == Interface, Endpoint.Options == Void {
-        .init {
-            self.run(keyPath, with: $0)
-        }
-    }
-}
-
-// MARK: - Extensions -
-
-extension Repository {
-    public func task<E: Endpoint>(
-        for endpoint: E
-    ) -> AnyParametrizedTask<
-        (input: E.Input, options: E.Options),
-        E.Output, Interface.Error
-    > where E.Root == Interface {
+    public func task<Input, Output, Options>(
+        for endpoint: AnyEndpoint<Interface, Input, Output, Options>
+    ) -> AnyParametrizedTask<(input: Input, options: Options), Output, Interface.Error> {
         return ParametrizedPassthroughTask(body: { (task: ParametrizedPassthroughTask) in
             guard let (input, options) = task.input else {
                 task.send(.error(.missingInput()))
@@ -82,7 +71,17 @@ extension Repository {
         })
         .eraseToAnyTask()
     }
+    
+    public subscript<Endpoint: API.Endpoint>(
+        dynamicMember keyPath: KeyPath<Interface, Endpoint>
+    ) -> RunEndpointFunction<Endpoint> where Endpoint.Root == Interface, Endpoint.Options == Void {
+        .init {
+            self.run(keyPath, with: $0)
+        }
+    }
 }
+
+// MARK: - Extensions -
 
 extension Repository {
     public func run<E: Endpoint>(
@@ -90,7 +89,7 @@ extension Repository {
         with input: E.Input,
         options: E.Options
     ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
-        let result = task(for: endpoint)
+        let result = task(for: .init(endpoint))
         
         do {
             try result.receive((input: input, options: options))
@@ -110,13 +109,6 @@ extension Repository {
         with input: E.Input
     ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface, E.Options == Void {
         run(interface[keyPath: endpoint], with: input, options: ())
-    }
-    
-    public func run<E: Endpoint>(
-        _ endpoint: KeyPath<Interface.Endpoints.Type, E>,
-        with input: E.Input
-    ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface, E.Options == Void {
-        run(Interface.Endpoints.self[keyPath: endpoint], with: input, options: ())
     }
 }
 

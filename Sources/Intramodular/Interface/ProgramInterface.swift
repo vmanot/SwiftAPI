@@ -18,9 +18,6 @@ public protocol ProgramInterface: Identifiable {
     
     /// The data schema of this API.
     associatedtype Schema = Never
-    
-    /// The endpoints of this API.
-    associatedtype Endpoints = Never
 }
 
 // MARK: - Helpers -

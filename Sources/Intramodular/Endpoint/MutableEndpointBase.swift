@@ -27,18 +27,10 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
     
     public required init<Descriptor: EndpointDescriptor>(
         _ descriptor: Descriptor.Type
-    ) where Descriptor.Input == Input, Descriptor.Output == Output, Options == Void {
+    ) where Descriptor.Input == Input, Descriptor.Output == Output, Options == Descriptor.Options {
         
     }
-    
-    public required init(
-        input: Input.Type,
-        output: Output.Type,
-        options: Options.Type
-    ) {
         
-    }
-    
     open func buildRequestBase(
         from input: Input,
         context: BuildRequestContext
