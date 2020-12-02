@@ -4,7 +4,7 @@
 
 import Swift
 
-public protocol Request {
+public protocol Request: Hashable {
     associatedtype Response
     associatedtype Error: Swift.Error
     

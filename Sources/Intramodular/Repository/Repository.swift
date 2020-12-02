@@ -2,6 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
+import FoundationX
 import Merge
 import Swallow
 import Task
@@ -10,14 +11,16 @@ import Task
 ///
 /// The combination of a program interface and a compatible request session.
 @dynamicMemberLookup
-public protocol Repository: ObservableObject {
+public protocol Repository: Caching, ObservableObject {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
+    associatedtype Cache = NoCache<Session.Request, Session.Request.Result> where Cache.Key == Session.Request, Cache.Value == Session.Request.Response
     
     typealias Schema = Interface.Schema
     
     var interface: Interface { get }
     var session: Session { get }
+    var cache: Cache { get }
     
     func task<Input, Output, Options>(
         for endpoint: AnyEndpoint<Interface, Input, Output, Options>
@@ -44,6 +47,12 @@ extension Repository {
                     from: input,
                     context: .init(root: self.interface, options: options)
                 )
+                
+                if let response = try? self.cache.decacheValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: self.interface, input: input, request: request)) {
+                    task.send(.success(output))
+                    
+                    return .empty()
+                }
                 
                 return self
                     .session
