@@ -4,6 +4,7 @@
 
 import Swallow
 
+@propertyWrapper
 open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: MutableEndpoint, Initiable {
     public typealias Request = Root.Request
     
@@ -13,12 +14,8 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
     private var buildRequestTransform: (_ request: Root.Request, _ context: BuildRequestTransformContext) throws -> Root.Request = { request, context in request }
     private var outputTransform: (_ output: Output, _ context: TransformOutputContext) throws -> Output = { output, context in output }
     
-    public var wrappedValue: MutableEndpointBase<Root, Input, Output, Options> {
-        get {
-            self
-        } set {
-            self.buildRequestTransform = newValue.buildRequestTransform
-        }
+    open var wrappedValue: MutableEndpointBase<Root, Input, Output, Options> {
+        self
     }
     
     public required init() {

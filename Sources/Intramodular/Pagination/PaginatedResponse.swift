@@ -9,9 +9,5 @@ import Swift
 public protocol PaginatedRequestResponse {
     associatedtype PaginatedListRepresentation: PaginatedListType
     
-    func convert() throws -> PaginatedListRepresentation.Partial
-}
-
-public protocol TokenPaginatedRequestResponse: PaginatedRequestResponse where PaginatedListRepresentation: TokenPaginatedListType {
-    typealias PageToken = PaginatedListRepresentation.Token
+    func convert() throws -> Partial<PaginatedListRepresentation>
 }

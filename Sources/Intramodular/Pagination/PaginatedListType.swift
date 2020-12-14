@@ -10,29 +10,24 @@ public protocol PaginatedListType: Partializable {
     associatedtype Partial
 }
 
-public protocol TokenPaginatedListType: PaginatedListType {
-    associatedtype Token
-    associatedtype Item
-}
-
 // MARK: - Conformances -
 
-public struct TokenPaginatedList<Token: RequestPageToken, Item>: Initiable, TokenPaginatedListType {
+public struct TokenPaginatedList<Item>: Initiable, PaginatedListType {
     public struct Partial {
         public let items: [Item]?
-        public let nextToken: Token?
+        public let nextToken: PaginationCursor?
         
-        public init(items: [Item]?, nextToken: Token?) {
+        public init(items: [Item]?, nextToken: PaginationCursor?) {
             self.items = items
             self.nextToken = nextToken
         }
     }
     
-    var usedTokens: [Token?] = []
-    var tail: [Token?: [Item]?] = [:]
+    var usedTokens: [PaginationCursor?] = []
+    var tail: [PaginationCursor?: [Item]?] = [:]
     var head: [Item]?
-    var currentToken: Token?
-    var nextToken: Token?
+    var currentToken: PaginationCursor?
+    var nextToken: PaginationCursor?
     
     public init() {
         
