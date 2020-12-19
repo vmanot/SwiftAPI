@@ -33,14 +33,12 @@ extension PaginationCursor {
     }
 }
 
-extension PaginationCursor {
-    public enum _Type: String, Codable {
-        case data
-        case string
-        case offset
-        case cloudKitQueryCursor
-        case value
-    }
+public enum PaginationCursorType {
+    case data
+    case string
+    case offset
+    case cloudKitQueryCursor
+    case value
 }
 
 // MARK: - Protocol Conformances -
@@ -80,7 +78,7 @@ extension PaginationCursor: Codable {
 
 // MARK: - Auxiliary Implementation -
 
-public enum PaginationLimit: ExpressibleByIntegerLiteral, ExpressibleByNilLiteral {
+public enum PaginationLimit: ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Hashable {
     case offset(Int)
     case none
     
@@ -95,4 +93,5 @@ public enum PaginationLimit: ExpressibleByIntegerLiteral, ExpressibleByNilLitera
 
 public protocol SpecifiesPaginationCursor {
     var paginationCursor: PaginationCursor? { get set }
+    var paginationCursorType: PaginationCursorType { get set }
 }
