@@ -13,10 +13,9 @@ public protocol _opaque_ResourceProtocol {
 
 public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
     associatedtype Value
-    associatedtype ValuePublisher: Publisher where ValuePublisher.Output == Result<Value, Error>, ValuePublisher.Failure == Never
+    associatedtype ValueStreamPublisher: Publisher where ValueStreamPublisher.Output == Result<Value, Error>, ValueStreamPublisher.Failure == Never
     
-    var publisher: ValuePublisher { get }
-    
+    var publisher: ValueStreamPublisher { get }
     var latestValue: Value? { get }
     
     func fetch() -> AnyTask<Value, Error>
