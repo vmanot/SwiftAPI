@@ -17,7 +17,6 @@ let package = Package(
         .package(url: "https://github.com/vmanot/Compute.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Swallow.git", .branch("master")),
-        .package(url: "https://github.com/vmanot/Task.git", .branch("master"))
     ],
     targets: [
         .target(
@@ -25,8 +24,7 @@ let package = Package(
             dependencies: [
                 "Compute",
                 "Merge",
-                "Swallow",
-                "Task"
+                "Swallow"
             ],
             path: "Sources"
         ),

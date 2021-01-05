@@ -5,7 +5,6 @@
 import FoundationX
 import Merge
 import Swallow
-import Task
 
 public final class AnyRepository<Interface: ProgramInterface, Session: RequestSession>: Repository where Interface.Request == Session.Request {
     public typealias Cache = NoCache<Session.Request, Session.Request.Response>

@@ -5,7 +5,6 @@
 import Dispatch
 import Merge
 import Swallow
-import Task
 
 /// An accessor for a REST resource.
 @propertyWrapper
@@ -194,34 +193,29 @@ extension RESTfulResourceAccessor  {
             dependencies: []
         )
     }
+    
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        from getInput: @escaping (Container) throws -> GetEndpoint.Input
+    ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { try getInput($0) },
+                output: { $0 }
+            ),
+            dependencies: [],
+            set: .init(),
+            dependencies: []
+        )
+    }
 }
 
 // MARK: - API -
 
 extension Repository where Interface: RESTfulInterface {
     public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<Value, Self, GetEndpoint, SetEndpoint> where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
-}
-
-extension Result {
-    public init?<Repository, GetEndpoint, SetEndpoint>(
-        resource: RESTfulResourceAccessor<Success, Repository, GetEndpoint, SetEndpoint>
-    ) where Failure == Error {
-        switch resource.base.lastGetTaskResult {
-            case .none:
-                return nil
-            case .some(let result): do {
-                switch result {
-                    case .canceled:
-                        return nil
-                    case .success(let value):
-                        self = .success(value)
-                    case .error(let error):
-                        self = .failure(error)
-                }
-            }
-            
-        }
-    }
 }
 
 // MARK: - Auxiliary Implementation -

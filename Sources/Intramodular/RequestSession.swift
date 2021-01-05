@@ -5,12 +5,11 @@
 import Merge
 import ObjectiveC
 import Swift
-import Task
 
 public protocol RequestSession: CancellablesHolder, Identifiable {
     associatedtype Request: API.Request
-    associatedtype RequestTask: Task where RequestTask.Success == Request.Response, RequestTask.Error == Request.Error
-        
+    associatedtype RequestTask: TaskProtocol where RequestTask.Success == Request.Response, RequestTask.Error == Request.Error
+    
     func task(with _: Request) -> RequestTask
 }
 

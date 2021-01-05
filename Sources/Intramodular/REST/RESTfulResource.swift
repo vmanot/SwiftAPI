@@ -5,7 +5,6 @@
 import Dispatch
 import Merge
 import Swallow
-import Task
 
 /// An accessor for a REST resource.
 ///
@@ -52,6 +51,14 @@ public final class RESTfulResource<
     
     public var latestValue: Value? {
         _wrappedValue
+    }
+    
+    public var projectedValue: AnyResource<Value> {
+        .init(self)
+    }
+    
+    public func unwrap() throws -> Value? {
+        latestValue // FIXME!!!
     }
     
     @usableFromInline

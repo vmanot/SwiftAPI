@@ -5,7 +5,6 @@
 import Combine
 import Merge
 import Swift
-import Task
 
 public protocol _opaque_ResourceProtocol {
     
@@ -17,6 +16,8 @@ public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
     
     var publisher: ValueStreamPublisher { get }
     var latestValue: Value? { get }
+    
+    func unwrap() throws -> Value? 
     
     func fetch() -> AnyTask<Value, Error>
 }
