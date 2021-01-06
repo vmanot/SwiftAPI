@@ -10,6 +10,14 @@ import FoundationX
 import Swift
 
 public enum PaginationCursor: Hashable {
+    public enum CursorType {
+        case data
+        case string
+        case offset
+        case cloudKitQueryCursor
+        case value
+    }
+    
     case data(Data)
     case string(String)
     
@@ -31,14 +39,6 @@ extension PaginationCursor {
         
         return string
     }
-}
-
-public enum PaginationCursorType {
-    case data
-    case string
-    case offset
-    case cloudKitQueryCursor
-    case value
 }
 
 // MARK: - Protocol Conformances -
@@ -93,5 +93,4 @@ public enum PaginationLimit: ExpressibleByIntegerLiteral, ExpressibleByNilLitera
 
 public protocol SpecifiesPaginationCursor {
     var paginationCursor: PaginationCursor? { get set }
-    var paginationCursorType: PaginationCursorType { get set }
 }

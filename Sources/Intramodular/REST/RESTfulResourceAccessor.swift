@@ -109,7 +109,7 @@ public final class RESTfulResourceAccessor<
     }
 }
 
-// MARK: - Initialization -
+// MARK: - Initializers -
 
 extension RESTfulResourceAccessor  {
     public convenience init(
