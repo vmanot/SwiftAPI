@@ -30,7 +30,6 @@ public enum PaginationCursor: Hashable {
     case value(AnyHashable)
 }
 
-
 extension PaginationCursor {
     public var stringValue: String? {
         guard case let .string(string) = self else {
@@ -78,12 +77,12 @@ extension PaginationCursor: Codable {
 
 // MARK: - Auxiliary Implementation -
 
-public enum PaginationLimit: ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Hashable {
-    case offset(Int)
+public enum FetchLimit: ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Hashable {
+    case cursor(PaginationCursor)
     case none
     
     public init(integerLiteral value: Int) {
-        self = .offset(value)
+        self = .cursor(.offset(value))
     }
     
     public init(nilLiteral: Void) {
