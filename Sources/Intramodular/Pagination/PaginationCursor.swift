@@ -77,7 +77,7 @@ extension PaginationCursor: Codable {
 
 // MARK: - Auxiliary Implementation -
 
-public enum FetchLimit: ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Hashable {
+public enum FetchLimit: Codable, ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Hashable {
     case cursor(PaginationCursor)
     case none
     
@@ -88,6 +88,24 @@ public enum FetchLimit: ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Ha
     public init(nilLiteral: Void) {
         self = .none
     }
+    
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+            case .cursor(let cursor):
+                try encoder.encode(single: cursor)
+            case .none:
+                try encoder.encodeSingleNil()
+        }
+    }
+    
+    public init(from decoder: Decoder) throws {
+        if (try? decoder.decodeSingleValueNil()) ?? false {
+            self = .none
+        } else {
+            self = .cursor(try decoder.decode(single: PaginationCursor.self))
+        }
+    }
+    
 }
 
 public protocol SpecifiesPaginationCursor {
