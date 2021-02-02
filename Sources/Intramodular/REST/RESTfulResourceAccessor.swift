@@ -89,7 +89,7 @@ public final class RESTfulResourceAccessor<
                 self.base.objectWillChange
                     .receiveOnMainQueue()
                     .publish(to: repositoryObjectWillChange)
-                    .store(in: cancellables)
+                    .subscribe(in: cancellables)
             }
             
             self.base._lastRootID = repository.interface.id
