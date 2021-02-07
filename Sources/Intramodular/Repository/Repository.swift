@@ -87,6 +87,14 @@ extension Repository {
             self.run(keyPath, with: $0)
         }
     }
+    
+    public subscript<Endpoint: API.Endpoint>(
+        dynamicMember keyPath: KeyPath<Interface, Endpoint>
+    ) -> RunEndpointFunction<Endpoint> where Endpoint.Root == Interface, Endpoint.Options: ExpressibleByNilLiteral {
+        .init {
+            self.run(self.interface[keyPath: keyPath], with: $0, options: nil)
+        }
+    }
 }
 
 // MARK: - Extensions -
@@ -151,5 +159,9 @@ public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
     
     public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input: ExpressibleByNilLiteral {
         run(nil)
+    }
+    
+    public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input == Void {
+        run(())
     }
 }
