@@ -14,7 +14,7 @@ public final class RESTfulResource<
     Repository: API.Repository,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
->: RepositoryResourceProtocol where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
+>: CancellablesHolder, RepositoryResourceProtocol where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
     public typealias Root = Repository.Interface
     
     @usableFromInline
@@ -72,9 +72,9 @@ public final class RESTfulResource<
     
     init(
         get: EndpointCoordinator<GetEndpoint>,
-        dependencies getDependencies: [Dependency],
+        getDependencies: [Dependency],
         set: EndpointCoordinator<SetEndpoint>,
-        dependencies setDependencies: [Dependency]
+        setDependencies: [Dependency]
     ) {
         self.get = get
         self.getDependencies = getDependencies
@@ -148,9 +148,9 @@ extension RESTfulResource  {
                 input: { _ in .init() },
                 output: { $0[keyPath: getValueKeyPath] }
             ),
-            dependencies: [],
+            getDependencies: [],
             set: .init(),
-            dependencies: []
+            setDependencies: []
         )
         
         self._repository = repository
@@ -166,9 +166,9 @@ extension RESTfulResource  {
                 input: { _ in .init(nilLiteral: ()) },
                 output: { $0 }
             ),
-            dependencies: [],
+            getDependencies: [],
             set: .init(),
-            dependencies: []
+            setDependencies: []
         )
         
         self._repository = repository
@@ -184,9 +184,9 @@ extension RESTfulResource  {
                 input: { _ in .init() },
                 output: { $0 }
             ),
-            dependencies: [],
+            getDependencies: [],
             set: .init(),
-            dependencies: []
+            setDependencies: []
         )
         
         self._repository = repository
@@ -202,9 +202,9 @@ extension RESTfulResource  {
                 input: { _ in () },
                 output: { $0 }
             ),
-            dependencies: [],
+            getDependencies: [],
             set: .init(),
-            dependencies: []
+            setDependencies: []
         )
         
         self._repository = repository
@@ -221,9 +221,9 @@ extension RESTfulResource  {
                 input: { _ in getInput },
                 output: { $0 }
             ),
-            dependencies: [],
+            getDependencies: [],
             set: .init(),
-            dependencies: []
+            setDependencies: []
         )
         
         self._repository = repository
@@ -258,7 +258,7 @@ extension RESTfulResource {
             
             let resultTask = PassthroughTask<Value, Error>()
             
-            task.onResult({ [weak self] result in
+            task.resultPublisher.sink { [weak self] result in
                 guard let `self` = self else {
                     return
                 }
@@ -268,7 +268,8 @@ extension RESTfulResource {
                     
                     resultTask.send(status: .init(self.lastGetTaskResult!))
                 }
-            })
+            }
+            .store(in: cancellables)
             
             return resultTask.eraseToAnyTask()
         } catch {

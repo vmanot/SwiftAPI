@@ -31,15 +31,15 @@ public final class RESTfulResourceAccessor<
     
     init(
         get: Resource.EndpointCoordinator<GetEndpoint>,
-        dependencies getDependencies: [Resource.Dependency],
+        getDependencies: [Resource.Dependency] = [],
         set: Resource.EndpointCoordinator<SetEndpoint>,
-        dependencies setDependencies: [Resource.Dependency]
+        setDependencies: [Resource.Dependency] = []
     ) {
         self.base = .init(
             get: get,
-            dependencies: getDependencies,
+            getDependencies: getDependencies,
             set: set,
-            dependencies: setDependencies
+            setDependencies: setDependencies
         )
     }
     
@@ -123,9 +123,7 @@ extension RESTfulResourceAccessor  {
                 input: { _ in .init() },
                 output: { $0[keyPath: getValueKeyPath] }
             ),
-            dependencies: [],
-            set: .init(),
-            dependencies: []
+            set: .init()
         )
     }
     
@@ -139,9 +137,7 @@ extension RESTfulResourceAccessor  {
                 input: { _ in .init(nilLiteral: ()) },
                 output: { $0 }
             ),
-            dependencies: [],
-            set: .init(),
-            dependencies: []
+            set: .init()
         )
     }
     
@@ -155,9 +151,7 @@ extension RESTfulResourceAccessor  {
                 input: { _ in .init() },
                 output: { $0 }
             ),
-            dependencies: [],
-            set: .init(),
-            dependencies: []
+            set: .init()
         )
     }
     
@@ -171,9 +165,7 @@ extension RESTfulResourceAccessor  {
                 input: { _ in () },
                 output: { $0 }
             ),
-            dependencies: [],
-            set: .init(),
-            dependencies: []
+            set: .init()
         )
     }
     
@@ -188,9 +180,7 @@ extension RESTfulResourceAccessor  {
                 input: { _ in getInput },
                 output: { $0 }
             ),
-            dependencies: [],
-            set: .init(),
-            dependencies: []
+            set: .init()
         )
     }
     
@@ -205,9 +195,7 @@ extension RESTfulResourceAccessor  {
                 input: { try getInput($0) },
                 output: { $0 }
             ),
-            dependencies: [],
-            set: .init(),
-            dependencies: []
+            set: .init()
         )
     }
 }
@@ -215,7 +203,12 @@ extension RESTfulResourceAccessor  {
 // MARK: - API -
 
 extension Repository where Interface: RESTfulInterface {
-    public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<Value, Self, GetEndpoint, SetEndpoint> where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
+    public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<
+        Value,
+        Self,
+        GetEndpoint,
+        SetEndpoint
+    > where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
 }
 
 // MARK: - Auxiliary Implementation -

@@ -23,11 +23,11 @@ public struct TokenPaginatedList<Item>: Initiable, PaginatedListType {
         }
     }
     
-    var usedTokens: [PaginationCursor?] = []
-    var tail: [PaginationCursor?: [Item]?] = [:]
-    var head: [Item]?
-    var currentToken: PaginationCursor?
-    var nextToken: PaginationCursor?
+    private var usedTokens: [PaginationCursor?] = []
+    private var tail: [PaginationCursor?: [Item]?] = [:]
+    private var head: [Item]?
+    private var currentToken: PaginationCursor?
+    private var nextToken: PaginationCursor?
     
     public init() {
         
