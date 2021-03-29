@@ -230,7 +230,7 @@ extension RESTfulResource  {
     }
 }
 
-// MARK: - Protocol Conformances -
+// MARK: - Conformances -
 
 extension RESTfulResource {
     @discardableResult

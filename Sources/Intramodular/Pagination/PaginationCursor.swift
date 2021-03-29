@@ -40,7 +40,7 @@ extension PaginationCursor {
     }
 }
 
-// MARK: - Protocol Conformances -
+// MARK: - Conformances -
 
 extension PaginationCursor: Codable {
     public init(from decoder: Decoder) throws {
