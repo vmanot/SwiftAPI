@@ -40,9 +40,7 @@ public final class RESTfulResource<
     @Published var _wrappedValue: Value?
     
     public var publisher: AnyPublisher<Result<Value, Error>, Never> {
-        TODO.here(.fix)
-        
-        return $_wrappedValue
+        $_wrappedValue
             .compactMap({ $0 })
             .eraseError()
             .toResultPublisher()

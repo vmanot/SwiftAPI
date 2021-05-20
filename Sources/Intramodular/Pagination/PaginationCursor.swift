@@ -7,27 +7,29 @@ import CloudKit
 #endif
 import Compute
 import FoundationX
-import Swift
+import Swallow
 
 public enum PaginationCursor: Hashable {
-    public enum CursorType {
-        case data
-        case string
-        case offset
-        case cloudKitQueryCursor
-        case value
+    public enum CursorType: String, Codable {
+        case data = "data"
+        case string = "string"
+        case offset = "offset"
+        case pageNumber = "pageNumber"
+        case cloudKitQueryCursor = "cloudKitQueryCursor"
+        case value = "value"
     }
     
     case data(Data)
     case string(String)
     
     case offset(Int)
+    case pageNumber(Int)
     
     #if canImport(CloudKit)
     case cloudKitQueryCursor(CKQueryOperation.Cursor)
     #endif
     
-    case value(AnyHashable)
+    case value(AnyCodable)
 }
 
 extension PaginationCursor {
@@ -43,34 +45,88 @@ extension PaginationCursor {
 // MARK: - Conformances -
 
 extension PaginationCursor: Codable {
+    public enum CodingKeys: CodingKey {
+        case type
+        case value
+    }
+    
     public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        if let data = try? container.decode(Data.self) {
-            self = .data(data)
-        } else if let string = try? container.decode(String.self) {
-            self = .string(string)
-        } else if let offset = try? container.decode(Int.self) {
-            self = .offset(offset)
-        } else {
-            throw Never.Reason.unimplemented
+        let type = try container.decode(CursorType.self, forKey: .value)
+        
+        switch type {
+            case .data:
+                self = try .data(container.decode(Data.self, forKey: .value))
+            case .string:
+                self = try .string(container.decode(String.self, forKey: .value))
+            case .offset:
+                self = try .offset(container.decode(Int.self, forKey: .value))
+            case .pageNumber:
+                self = try .pageNumber(container.decode(Int.self, forKey: .value))
+            case .cloudKitQueryCursor:
+                self = try .cloudKitQueryCursor(CKQueryOperation.Cursor.unarchiveUsingKeyedUnarchiver(from: container.decode(Data.self, forKey: .value)))
+            case .value:
+                self = try .value(container.decode(AnyCodable.self, forKey: .value))
         }
     }
     
     public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
+        var container = encoder.container(keyedBy: CodingKeys.self)
         
         switch self {
             case .data(let data):
-                try container.encode(data)
+                try container.encode(data, forKey: .value)
             case .string(let string):
-                try container.encode(string)
+                try container.encode(string, forKey: .value)
             case .offset(let offset):
-                try container.encode(offset)
+                try container.encode(offset, forKey: .value)
+            case .pageNumber(let number):
+                try container.encode(number, forKey: .value)
             case .cloudKitQueryCursor(let cursor):
-                try container.encode(try cursor.archiveUsingKeyedArchiver()) // FIXME!!!
+                try container.encode(try cursor.archiveUsingKeyedArchiver(), forKey: .value)
             case .value:
                 throw Never.Reason.unimplemented
+        }
+    }
+}
+
+extension PaginationCursor: Comparable {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs, rhs) {
+            case (.data, .data):
+                return false
+            case (.string, .string):
+                return false
+            case (.offset(let lhsValue), .offset(let rhsValue)):
+                return lhsValue < rhsValue
+            case (.pageNumber(let lhsValue), .pageNumber(let rhsValue)):
+                return lhsValue < rhsValue
+            case (.cloudKitQueryCursor, .cloudKitQueryCursor):
+                return false
+            case (.value, .value):
+                return false
+            default:
+                return false
+        }
+    }
+    
+    public static func > (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs, rhs) {
+            case (.data, .data):
+                return false
+            case (.string, .string):
+                return false
+            case (.offset(let lhsValue), .offset(let rhsValue)):
+                return lhsValue > rhsValue
+            case (.pageNumber(let lhsValue), .pageNumber(let rhsValue)):
+                return lhsValue > rhsValue
+            case (.cloudKitQueryCursor, .cloudKitQueryCursor):
+                return false
+            case (.value, .value):
+                return false
+            default:
+                return false
         }
     }
 }
@@ -105,9 +161,4 @@ public enum FetchLimit: Codable, ExpressibleByIntegerLiteral, ExpressibleByNilLi
             self = .cursor(try decoder.decode(single: PaginationCursor.self))
         }
     }
-    
-}
-
-public protocol SpecifiesPaginationCursor {
-    var paginationCursor: PaginationCursor? { get set }
 }

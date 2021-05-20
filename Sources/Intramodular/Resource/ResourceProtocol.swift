@@ -17,7 +17,7 @@ public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
     var publisher: ValueStreamPublisher { get }
     var latestValue: Value? { get }
     
-    func unwrap() throws -> Value? 
+    func unwrap() throws -> Value?
     
     func fetch() -> AnyTask<Value, Error>
 }
