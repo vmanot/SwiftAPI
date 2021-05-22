@@ -16,19 +16,18 @@ public enum PaginationCursor: Hashable {
         case offset = "offset"
         case pageNumber = "pageNumber"
         case cloudKitQueryCursor = "cloudKitQueryCursor"
+        case url = "url"
         case value = "value"
     }
     
     case data(Data)
     case string(String)
-    
     case offset(Int)
     case pageNumber(Int)
-    
     #if canImport(CloudKit)
     case cloudKitQueryCursor(CKQueryOperation.Cursor)
     #endif
-    
+    case url(URL)
     case value(AnyCodable)
 }
 
@@ -64,8 +63,12 @@ extension PaginationCursor: Codable {
                 self = try .offset(container.decode(Int.self, forKey: .value))
             case .pageNumber:
                 self = try .pageNumber(container.decode(Int.self, forKey: .value))
+            #if canImport(CloudKit)
             case .cloudKitQueryCursor:
                 self = try .cloudKitQueryCursor(CKQueryOperation.Cursor.unarchiveUsingKeyedUnarchiver(from: container.decode(Data.self, forKey: .value)))
+            #endif
+            case .url:
+                self = try .url(container.decode(URL.self, forKey: .value))
             case .value:
                 self = try .value(container.decode(AnyCodable.self, forKey: .value))
         }
@@ -76,15 +79,25 @@ extension PaginationCursor: Codable {
         
         switch self {
             case .data(let data):
+                try container.encode(CursorType.data, forKey: .type)
                 try container.encode(data, forKey: .value)
             case .string(let string):
+                try container.encode(CursorType.string, forKey: .type)
                 try container.encode(string, forKey: .value)
             case .offset(let offset):
+                try container.encode(CursorType.offset, forKey: .type)
                 try container.encode(offset, forKey: .value)
             case .pageNumber(let number):
+                try container.encode(CursorType.pageNumber, forKey: .type)
                 try container.encode(number, forKey: .value)
+            #if canImport(CloudKit)
             case .cloudKitQueryCursor(let cursor):
+                try container.encode(CursorType.cloudKitQueryCursor, forKey: .type)
                 try container.encode(try cursor.archiveUsingKeyedArchiver(), forKey: .value)
+            #endif
+            case .url(let url):
+                try container.encode(CursorType.url, forKey: .type)
+                try container.encode(url, forKey: .value)
             case .value:
                 throw Never.Reason.unimplemented
         }
