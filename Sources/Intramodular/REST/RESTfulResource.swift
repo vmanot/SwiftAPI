@@ -42,10 +42,9 @@ public final class RESTfulResource<
     }
     
     public var publisher: AnyPublisher<Result<Value, Error>, Never> {
-        $_wrappedValue
+        $lastGetTaskResult
             .compactMap({ $0 })
-            .eraseError()
-            .toResultPublisher()
+            .compactMap({ Result(from: $0) })
             .eraseToAnyPublisher()
     }
     
@@ -258,11 +257,13 @@ extension RESTfulResource {
             lastGetTask?.cancel()
             
             let getEndpoint = try get.endpoint(repository)
-            let getEndpointOptions = try getEndpoint.makeDefaultOptions()
+            var getEndpointOptions = try getEndpoint.makeDefaultOptions()
             
             if let latestValue = latestValue as? _opaque_PaginatedListType {
                 if var _getEndpointOptions = getEndpointOptions as? SpecifiesPaginationCursor {
                     _getEndpointOptions.paginationCursor = latestValue.nextCursor
+                    
+                    getEndpointOptions = try cast(_getEndpointOptions)
                 }
             }
             
