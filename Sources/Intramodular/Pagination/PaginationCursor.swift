@@ -39,6 +39,15 @@ extension PaginationCursor {
         
         return string
     }
+    
+    public var urlValue: URL? {
+        guard case let .url(url) = self else {
+            return nil
+        }
+        
+        return url
+    }
+
 }
 
 // MARK: - Conformances -

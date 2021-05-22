@@ -17,38 +17,36 @@ public final class RESTfulResourceAccessor<
     public typealias Resource = RESTfulResource<Value, Container, GetEndpoint, SetEndpoint>
     public typealias Root = Container.Interface
     
+    fileprivate weak var repository: Container?
+    
     fileprivate let cancellables = Cancellables()
     fileprivate let base: Resource
+    fileprivate var repositorySubscription: AnyCancellable?
     
     public var projectedValue: AnyRepositoryResource<Container, Value> {
         .init(base, repository: repository)
     }
     
-    @usableFromInline
-    weak var repository: Container?
-    @usableFromInline
-    var repositorySubscription: AnyCancellable?
+    public var wrappedValue: Value? {
+        get {
+            base.latestValue
+        } set {
+            base.latestValue = newValue
+        }
+    }
     
     init(
         get: Resource.EndpointCoordinator<GetEndpoint>,
-        getDependencies: [Resource.Dependency] = [],
+        getDependencies: [Resource.EndpointDependency] = [],
         set: Resource.EndpointCoordinator<SetEndpoint>,
-        setDependencies: [Resource.Dependency] = []
+        setDependencies: [Resource.EndpointDependency] = []
     ) {
         self.base = .init(
             get: get,
-            getDependencies: getDependencies,
+            dependenciesForGet: getDependencies,
             set: set,
-            setDependencies: setDependencies
+            dependenciesForSet: setDependencies
         )
-    }
-    
-    public var wrappedValue: Value? {
-        get {
-            base._wrappedValue
-        } set {
-            base._wrappedValue = newValue
-        }
     }
     
     @inlinable
@@ -99,7 +97,7 @@ public final class RESTfulResourceAccessor<
                     return
                 }
                 
-                if self.base.needsAutomaticGet {
+                if self.base.needsGetCall {
                     self.base.fetch()
                 }
                 
@@ -111,7 +109,7 @@ public final class RESTfulResourceAccessor<
 
 // MARK: - Initializers -
 
-extension RESTfulResourceAccessor  {
+extension RESTfulResourceAccessor {
     public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
@@ -215,7 +213,7 @@ extension Repository where Interface: RESTfulInterface {
 
 extension RESTfulResourceAccessor {
     @usableFromInline
-    final class ResourceDependency<R: ResourceAccessor>: Resource.Dependency {
+    final class ResourceDependency<R: ResourceAccessor>: Resource.EndpointDependency {
         let location: KeyPath<Container, R>
         
         init(location: KeyPath<Container, R>) {

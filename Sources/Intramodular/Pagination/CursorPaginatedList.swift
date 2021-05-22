@@ -8,11 +8,11 @@ import Swift
 
 public struct CursorPaginatedList<Item>: Initiable, PaginatedListType {
     public enum CodingKeys: CodingKey {
-        case cursorsConsumed
-        case tail
-        case head
-        case currentCursor
-        case nextCursor
+        case _cursorsConsumed
+        case _tail
+        case _head
+        case _currentCursor
+        case _nextCursor
     }
     
     public struct Partial {
@@ -25,13 +25,17 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType {
         }
     }
     
-    private var cursorsConsumed: [PaginationCursor?] = []
-    private var tail: OrderedDictionary<PaginationCursor?, [Item]?> = [:]
-    private var head: [Item]?
-    private var currentCursor: PaginationCursor?
-    private var nextCursor: PaginationCursor?
+    private var _cursorsConsumed: [PaginationCursor?] = []
+    private var _tail: OrderedDictionary<PaginationCursor?, [Item]?> = [:]
+    private var _head: [Item]?
+    private var _currentCursor: PaginationCursor?
+    private var _nextCursor: PaginationCursor?
     
     private var all: [Item] = []
+    
+    public var nextCursor: PaginationCursor? {
+        _nextCursor
+    }
     
     public init() {
         
@@ -40,43 +44,49 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType {
     public mutating func coalesceInPlace(with partial: Partial) throws {
         all.append(contentsOf: partial.items ?? [])
         
-        if let head = head {
-            cursorsConsumed.append(currentCursor)
+        if let head = _head {
+            _cursorsConsumed.append(_currentCursor)
             
-            tail.insert((key: currentCursor, value: head), at: tail.endIndex)
+            _tail.insert((key: _currentCursor, value: head), at: _tail.endIndex)
         }
         
-        head = partial.items
-        currentCursor = nextCursor
-        nextCursor = partial.nextCursor
+        _head = partial.items
+        _currentCursor = _nextCursor
+        _nextCursor = partial.nextCursor
     }
     
     public mutating func setNextCursor(_ cursor: PaginationCursor?) {
-        nextCursor = cursor
+        _nextCursor = cursor
     }
     
-    public mutating func concatenateInPlace(_ other: Self) {
-        guard other.cursorsConsumed.isEmpty else {
+    public mutating func concatenateInPlace(with other: Self) {
+        guard other._cursorsConsumed.isEmpty else {
             return assertionFailure()
         }
         
-        if let nextCursor = nextCursor {
-            guard nextCursor == other.currentCursor else {
+        if let nextCursor = _nextCursor, other._currentCursor != nil {
+            guard nextCursor == other._currentCursor else {
                 return assertionFailure("lhs.nextCursor != rhs.currentCursor")
             }
         }
         
         all.append(contentsOf: other.all)
         
-        if let head = head {
-            cursorsConsumed.append(currentCursor)
+        if let head = _head {
+            _cursorsConsumed.append(_currentCursor)
             
-            tail.insert((key: currentCursor, value: head), at: tail.endIndex)
+            _tail.insert((key: _currentCursor, value: head), at: _tail.endIndex)
         }
         
-        head = other.head
-        currentCursor = nextCursor
-        nextCursor = other.nextCursor
+        _head = other._head
+        _currentCursor = _nextCursor
+        _nextCursor = other._nextCursor
+    }
+}
+
+extension CursorPaginatedList: CustomStringConvertible {
+    public var description: String {
+        all.description // FIXME
     }
 }
 
@@ -107,11 +117,11 @@ extension CursorPaginatedList: Decodable where Item: Decodable {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
-            self.cursorsConsumed = try container.decode([PaginationCursor?].self, forKey: .cursorsConsumed)
-            self.tail = try container.decode(OrderedDictionary<PaginationCursor?, [Item]?>.self, forKey: .cursorsConsumed)
-            self.head = try container.decode([Item]?.self, forKey: .cursorsConsumed)
-            self.currentCursor = try container.decode(PaginationCursor?.self, forKey: .cursorsConsumed)
-            self.nextCursor = try container.decode(PaginationCursor?.self, forKey: .cursorsConsumed)
+            self._cursorsConsumed = try container.decode([PaginationCursor?].self, forKey: ._cursorsConsumed)
+            self._tail = try container.decode(OrderedDictionary<PaginationCursor?, [Item]?>.self, forKey: ._tail)
+            self._head = try container.decode([Item]?.self, forKey: ._head)
+            self._currentCursor = try container.decode(PaginationCursor?.self, forKey: ._currentCursor)
+            self._nextCursor = try container.decode(PaginationCursor?.self, forKey: ._nextCursor)
         } catch {
             let container = try decoder.singleValueContainer()
             

@@ -17,25 +17,29 @@ public final class RESTfulResource<
 >: CancellablesHolder, RepositoryResourceProtocol where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
     public typealias Root = Repository.Interface
     
-    let get: EndpointCoordinator<GetEndpoint>
-    let getDependencies: [Dependency]
-    let set: EndpointCoordinator<SetEndpoint>
-    let setDependencies: [Dependency]
+    fileprivate let get: EndpointCoordinator<GetEndpoint>
+    fileprivate let dependenciesForGet: [EndpointDependency]
+    fileprivate let set: EndpointCoordinator<SetEndpoint>
+    fileprivate let dependenciesForSet: [EndpointDependency]
     
-    var getEndpointOptions: GetEndpoint.Options?
-
+    var _lastRootID: Root.ID?
+    
+    @Published fileprivate var _wrappedValue: Value?
+    @Published fileprivate var lastGetTask: AnyTask<GetEndpoint.Output, Root.Error>?
+    @Published fileprivate var lastGetTaskResult: TaskResult<Value, Swift.Error>?
+    @Published fileprivate var lastSetTask: AnyTask<SetEndpoint.Output, Root.Error>?
+    @Published fileprivate var lastSetTaskResult: TaskResult<Void, Swift.Error>?
+    
     @usableFromInline
     weak var _repository: Repository?
     
     public var repository: Repository {
-        _repository!
+        guard let repository = _repository else {
+            fatalError("Could not resolve a repository for this resource.")
+        }
+        
+        return repository
     }
-    
-    @usableFromInline
-    var _lastRootID: Root.ID?
-    
-    @usableFromInline
-    @Published var _wrappedValue: Value?
     
     public var publisher: AnyPublisher<Result<Value, Error>, Never> {
         $_wrappedValue
@@ -46,7 +50,11 @@ public final class RESTfulResource<
     }
     
     public var latestValue: Value? {
-        _wrappedValue
+        get {
+            _wrappedValue
+        } set{
+            _wrappedValue = newValue // FIXME!!!
+        }
     }
     
     public var projectedValue: AnyResource<Value> {
@@ -57,44 +65,21 @@ public final class RESTfulResource<
         latestValue // FIXME!!!
     }
     
-    @usableFromInline
-    @Published var lastGetTask: AnyTask<GetEndpoint.Output, Root.Error>?
-    @usableFromInline
-    @Published var lastGetTaskResult: TaskResult<Value, Swift.Error>?
-    @usableFromInline
-    @Published var lastSetTask: AnyTask<SetEndpoint.Output, Root.Error>?
-    @usableFromInline
-    @Published var lastSetTaskResult: TaskResult<Void, Swift.Error>?
-    
     init(
         get: EndpointCoordinator<GetEndpoint>,
-        getDependencies: [Dependency],
+        dependenciesForGet: [EndpointDependency],
         set: EndpointCoordinator<SetEndpoint>,
-        setDependencies: [Dependency]
+        dependenciesForSet: [EndpointDependency]
     ) {
         self.get = get
-        self.getDependencies = getDependencies
+        self.dependenciesForGet = dependenciesForGet
         self.set = set
-        self.setDependencies = setDependencies
+        self.dependenciesForSet = dependenciesForSet
     }
 }
 
 extension RESTfulResource {
-    private var getDependenciesAreMet: Bool {
-        guard let repository = _repository else {
-            return false
-        }
-        
-        for dependency in getDependencies {
-            if !dependency.isAvailable(in: repository) {
-                return false
-            }
-        }
-        
-        return true
-    }
-    
-    var needsAutomaticGet: Bool {
+    var needsGetCall: Bool {
         guard let repository = _repository else {
             return false
         }
@@ -116,21 +101,36 @@ extension RESTfulResource {
         return _wrappedValue == nil
     }
     
-    func receiveGetTaskResult(_ result: TaskResult<GetEndpoint.Output, Root.Error>) {
+    func receiveGetEndpointOutput(
+        _ output: TaskResult<GetEndpoint.Output, Root.Error>
+    ) -> TaskResult<Value, Error> {
+        var result: TaskResult<Value, Error>
+        
+        lastGetTask = nil
+        
         do {
-            lastGetTask = nil
-            lastGetTaskResult = try result
+            result = try output
                 .map(get.output)
                 .mapError({ $0 as Swift.Error })
+            
+            if var _result = try? self.lastGetTaskResult?.get() as? _opaque_PaginatedListType, let newResult = try? result.get() as? _opaque_PaginatedListType {
+                try _result._opaque_concatenateInPlace(with: newResult)
+                
+                result = .success(try cast(_result, to: Value.self))
+            }
         } catch {
-            lastGetTaskResult = .error(error)
+            result = .error(error)
         }
+            
+        self.lastGetTaskResult = result
         
-        _wrappedValue = lastGetTaskResult?.successValue
+        _wrappedValue = result.successValue
+
+        return result
     }
 }
 
-// MARK: - API -
+// MARK: - Initializers -
 
 extension RESTfulResource  {
     public convenience init(
@@ -144,9 +144,9 @@ extension RESTfulResource  {
                 input: { _ in .init() },
                 output: { $0[keyPath: getValueKeyPath] }
             ),
-            getDependencies: [],
+            dependenciesForGet: [],
             set: .init(),
-            setDependencies: []
+            dependenciesForSet: []
         )
         
         self._repository = repository
@@ -162,9 +162,9 @@ extension RESTfulResource  {
                 input: { _ in .init(nilLiteral: ()) },
                 output: { $0 }
             ),
-            getDependencies: [],
+            dependenciesForGet: [],
             set: .init(),
-            setDependencies: []
+            dependenciesForSet: []
         )
         
         self._repository = repository
@@ -180,9 +180,9 @@ extension RESTfulResource  {
                 input: { _ in .init() },
                 output: { $0 }
             ),
-            getDependencies: [],
+            dependenciesForGet: [],
             set: .init(),
-            setDependencies: []
+            dependenciesForSet: []
         )
         
         self._repository = repository
@@ -198,9 +198,9 @@ extension RESTfulResource  {
                 input: { _ in () },
                 output: { $0 }
             ),
-            getDependencies: [],
+            dependenciesForGet: [],
             set: .init(),
-            setDependencies: []
+            dependenciesForSet: []
         )
         
         self._repository = repository
@@ -217,9 +217,9 @@ extension RESTfulResource  {
                 input: { _ in getInput },
                 output: { $0 }
             ),
-            getDependencies: [],
+            dependenciesForGet: [],
             set: .init(),
-            setDependencies: []
+            dependenciesForSet: []
         )
         
         self._repository = repository
@@ -231,51 +231,66 @@ extension RESTfulResource  {
 extension RESTfulResource {
     @discardableResult
     public func fetch() -> AnyTask<Value, Error> {
-        guard let repository = _repository else {
-            assertionFailure()
+        do {
+            try validateDependencyResolution()
             
-            return .failure(RESTfulResourceError.dependenciesAreNotMet)
+            let task = try createTaskForGetEndpoint()
+            let resultTask = PassthroughTask<Value, Error>()
+            
+            task.resultPublisher
+                .receiveOnMainQueue()
+                .sink(in: cancellables) { [weak self] result in
+                    guard let self = self else {
+                        return
+                    }
+                    
+                    resultTask.send(status: .init(self.receiveGetEndpointOutput(result)))
+                }
+            
+            return resultTask.eraseToAnyTask()
+        } catch {
+            return .failure(error)
         }
-        
-        guard getDependenciesAreMet else {
-            return .failure(RESTfulResourceError.dependenciesAreNotMet)
-        }
-        
+    }
+    
+    private func createTaskForGetEndpoint() throws ->  AnyTask<GetEndpoint.Output, Repository.Interface.Error> {
         do {
             lastGetTask?.cancel()
             
             let getEndpoint = try get.endpoint(repository)
+            let getEndpointOptions = try getEndpoint.makeDefaultOptions()
             
-            getEndpointOptions = try getEndpoint.makeDefaultOptions()
+            if let latestValue = latestValue as? _opaque_PaginatedListType {
+                if var _getEndpointOptions = getEndpointOptions as? SpecifiesPaginationCursor {
+                    _getEndpointOptions.paginationCursor = latestValue.nextCursor
+                }
+            }
             
             let task = repository.run(
                 try get.endpoint(repository),
                 with: try get.input(repository),
-                options: try get.endpoint(repository).makeDefaultOptions()
+                options: getEndpointOptions
             )
             
             self.lastGetTask = task
             
-            let resultTask = PassthroughTask<Value, Error>()
-            
-            task.resultPublisher.sink { [weak self] result in
-                guard let `self` = self else {
-                    return
-                }
-                
-                DispatchQueue.asyncOnMainIfNecessary {
-                    `self`.receiveGetTaskResult(result)
-                    
-                    resultTask.send(status: .init(self.lastGetTaskResult!))
-                }
-            }
-            .store(in: cancellables)
-            
-            return resultTask.eraseToAnyTask()
+            return task
         } catch {
             lastGetTaskResult = .error(error)
             
-            return .failure(error)
+            throw error
+        }
+    }
+    
+    private func validateDependencyResolution() throws {
+        guard let repository = _repository else {
+            throw RESTfulResourceError.repositoryResolutionFailed
+        }
+        
+        for dependency in dependenciesForGet {
+            guard dependency.isAvailable(in: repository) else {
+                throw RESTfulResourceError.dependencyResolutionFailed
+            }
         }
     }
 }
@@ -302,14 +317,12 @@ extension RESTfulResource: Cancellable {
 
 extension RESTfulResource {
     @usableFromInline
-    class Dependency {
+    class EndpointDependency {
         func isAvailable(in repository: Repository) -> Bool {
             fatalError()
         }
     }
-}
-
-extension RESTfulResource {
+    
     public struct EndpointCoordinator<Endpoint: API.Endpoint> {
         public let endpoint: (Repository) throws -> Endpoint
         public let input: (Repository) throws -> Endpoint.Input
@@ -334,21 +347,29 @@ extension RESTfulResource {
             self.input = input
             self.output = output
         }
-    }
-}
-
-extension RESTfulResource.EndpointCoordinator where Endpoint == NeverEndpoint<Repository.Interface> {
-    public init() {
-        self.init(
-            endpoint: { _ in throw Never.Reason.irrational },
-            input: { _ in throw Never.Reason.irrational },
-            output: Never.materialize
-        )
+        
+        public init() where Endpoint == NeverEndpoint<Repository.Interface> {
+            self.init(
+                endpoint: { _ in throw Never.Reason.irrational },
+                input: { _ in throw Never.Reason.irrational },
+                output: Never.materialize
+            )
+        }
     }
 }
 
 // MARK: - Auxiliary Implementation -
 
-enum RESTfulResourceError: Error {
-    case dependenciesAreNotMet
+enum RESTfulResourceError: CustomDebugStringConvertible, Error {
+    case repositoryResolutionFailed
+    case dependencyResolutionFailed
+    
+    var debugDescription: String {
+        switch self {
+            case .repositoryResolutionFailed:
+                return "Repository resolution failed."
+            case .dependencyResolutionFailed:
+                return "Dependency resolution failed."
+        }
+    }
 }

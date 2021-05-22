@@ -7,12 +7,24 @@ import Swallow
 import Swift
 
 public protocol _opaque_PaginatedListType {
+    var nextCursor: PaginationCursor? { get }
+    
     mutating func setNextCursor(_ cursor: PaginationCursor?) throws
+    
+    mutating func _opaque_concatenateInPlace(with other: _opaque_PaginatedListType) throws
+}
+
+extension _opaque_PaginatedListType where Self: PaginatedListType {
+    public mutating func _opaque_concatenateInPlace(with other: _opaque_PaginatedListType) throws {
+        try concatenateInPlace(with: cast(other, to: Self.self))
+    }
 }
 
 public protocol PaginatedListType: _opaque_PaginatedListType, Partializable {
     associatedtype Partial
     
+    var nextCursor: PaginationCursor? { get }
+    
     mutating func setNextCursor(_ cursor: PaginationCursor?) throws
-    mutating func concatenateInPlace(_ other: Self) throws
+    mutating func concatenateInPlace(with other: Self) throws
 }
