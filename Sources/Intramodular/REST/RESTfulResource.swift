@@ -17,15 +17,13 @@ public final class RESTfulResource<
 >: CancellablesHolder, RepositoryResourceProtocol where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
     public typealias Root = Repository.Interface
     
-    @usableFromInline
     let get: EndpointCoordinator<GetEndpoint>
-    @usableFromInline
     let getDependencies: [Dependency]
-    @usableFromInline
     let set: EndpointCoordinator<SetEndpoint>
-    @usableFromInline
     let setDependencies: [Dependency]
     
+    var getEndpointOptions: GetEndpoint.Options?
+
     @usableFromInline
     weak var _repository: Repository?
     
@@ -245,6 +243,10 @@ extension RESTfulResource {
         
         do {
             lastGetTask?.cancel()
+            
+            let getEndpoint = try get.endpoint(repository)
+            
+            getEndpointOptions = try getEndpoint.makeDefaultOptions()
             
             let task = repository.run(
                 try get.endpoint(repository),
