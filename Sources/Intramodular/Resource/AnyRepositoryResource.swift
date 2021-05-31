@@ -12,7 +12,7 @@ public class AnyRepositoryResource<Repository: API.Repository, Value>: AnyResour
         _repository!
     }
     
-    public init<Resource: ResourceProtocol>(
+    public init<Resource: ResourceType>(
         _ resource: Resource,
         repository: Repository!
     ) where Resource.Value == Value {
@@ -21,7 +21,7 @@ public class AnyRepositoryResource<Repository: API.Repository, Value>: AnyResour
         super.init(resource)
     }
     
-    public init<Resource: RepositoryResourceProtocol>(
+    public init<Resource: RepositoryResourceType>(
         _ resource: Resource,
         _: Void = ()
     ) where Resource.Value == Value, Resource.Repository == Repository {
@@ -31,7 +31,7 @@ public class AnyRepositoryResource<Repository: API.Repository, Value>: AnyResour
     }
 }
 
-extension RepositoryResourceProtocol {
+extension RepositoryResourceType {
     public func eraseToAnyRepositoryResource() -> AnyRepositoryResource<Repository, Value> {
         .init(self)
     }

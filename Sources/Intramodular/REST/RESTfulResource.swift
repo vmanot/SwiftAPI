@@ -14,7 +14,7 @@ public final class RESTfulResource<
     Repository: API.Repository,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
->: CancellablesHolder, RepositoryResourceProtocol where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
+>: CancellablesHolder, RepositoryResourceType where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
     public typealias Root = Repository.Interface
     
     fileprivate let get: EndpointCoordinator<GetEndpoint>

@@ -63,16 +63,16 @@ extension Repository {
                                 do {
                                     task?.send(.success(try endpoint.decodeOutput(from: value, context: .init(root: self.interface, input: input, request: request))))
                                 } catch {
-                                    task?.send(.error(.init(runtimeError: error)))
+                                    task?.send(.error(.runtime(error)))
                                 }
                             }
                             case .failure(let error): do {
-                                task?.send(.error(.init(runtimeError: error)))
+                                task?.send(.error(.runtime(error)))
                             }
                         }
                     })
             } catch {
-                task.send(.error(.init(runtimeError: error)))
+                task.send(.error(.runtime(error)))
                 
                 return AnyCancellable.empty()
             }
@@ -110,7 +110,7 @@ extension Repository {
         do {
             try result.receive((input: input, options: options))
         } catch {
-            return .failure(.init(runtimeError: error))
+            return .failure(.runtime(error))
         }
         
         result.start()
@@ -138,15 +138,15 @@ private enum _DefaultRepositoryError: Error {
 
 private extension ProgramInterfaceError {
     static func missingInput() -> Self {
-        .init(runtimeError: _DefaultRepositoryError.missingInput)
+        .runtime(_DefaultRepositoryError.missingInput)
     }
     
     static func invalidInput() -> Self {
-        .init(runtimeError: _DefaultRepositoryError.invalidInput)
+        .runtime(_DefaultRepositoryError.invalidInput)
     }
     
     static func invalidOutput() -> Self {
-        .init(runtimeError: _DefaultRepositoryError.invalidOutput)
+        .runtime(_DefaultRepositoryError.invalidOutput)
     }
 }
 

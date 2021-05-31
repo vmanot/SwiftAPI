@@ -4,13 +4,13 @@
 
 import Combine
 import Merge
-import Swift
+import Swallow
 
-public protocol _opaque_ResourceProtocol {
+public protocol _opaque_ResourceType: AnyProtocol {
     
 }
 
-public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
+public protocol ResourceType: _opaque_ResourceType, ObservableObject {
     associatedtype Value
     associatedtype ValueStreamPublisher: Publisher where ValueStreamPublisher.Output == Result<Value, Error>, ValueStreamPublisher.Failure == Never
     
@@ -22,7 +22,7 @@ public protocol ResourceProtocol: _opaque_ResourceProtocol, ObservableObject {
     func fetch() -> AnyTask<Value, Error>
 }
 
-public protocol RepositoryResourceProtocol: ResourceProtocol {
+public protocol RepositoryResourceType: ResourceType {
     associatedtype Repository: API.Repository
     
     var repository: Repository { get }

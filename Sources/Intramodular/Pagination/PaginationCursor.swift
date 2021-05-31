@@ -47,7 +47,7 @@ extension PaginationCursor {
         
         return url
     }
-
+    
 }
 
 // MARK: - Conformances -

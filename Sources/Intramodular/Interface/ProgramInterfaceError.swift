@@ -7,19 +7,11 @@ import Swift
 public protocol ProgramInterfaceError: Error {
     associatedtype Interface: ProgramInterface
     
-    init(_: Interface.Request.Error)
-    init(runtimeError: Error)
+    static func badRequest(_ error: Interface.Request.Error) -> Self
+    static func runtime(_ error: Error) -> Self
 }
 
 public enum DefaultProgramInterfaceError<Interface: ProgramInterface>: ProgramInterfaceError {
     case badRequest(Interface.Request.Error)
     case runtime(Error)
-    
-    public init(_ error: Interface.Request.Error) {
-        self = .badRequest(error)
-    }
-    
-    public init(runtimeError: Error) {
-        self = .runtime(runtimeError)
-    }
 }

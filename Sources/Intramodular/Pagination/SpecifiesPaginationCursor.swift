@@ -16,3 +16,11 @@ extension SpecifiesPaginationCursor {
         nil
     }
 }
+
+extension PaginationCursor {
+    public struct Set {
+        public let previous: PaginationCursor?
+        public let next: PaginationCursor?
+        public let last: PaginationCursor?
+    }
+}

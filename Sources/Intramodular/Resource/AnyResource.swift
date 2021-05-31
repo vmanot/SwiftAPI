@@ -5,8 +5,8 @@
 import Merge
 import Swallow
 
-public class AnyResource<Value>: ResourceProtocol {
-    public let base: _opaque_ResourceProtocol
+public class AnyResource<Value>: ResourceType {
+    public let base: _opaque_ResourceType
     public let objectWillChange: AnyObjectWillChangePublisher
     public let publisher: AnyPublisher<Result<Value, Error>, Never>
     
@@ -18,7 +18,7 @@ public class AnyResource<Value>: ResourceProtocol {
         latestValueImpl()
     }
     
-    public init<Resource: ResourceProtocol>(
+    public init<Resource: ResourceType>(
         _ resource: Resource
     ) where Resource.Value == Value {
         self.base = resource

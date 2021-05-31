@@ -28,3 +28,15 @@ public protocol PaginatedListType: _opaque_PaginatedListType, Partializable {
     mutating func setNextCursor(_ cursor: PaginationCursor?) throws
     mutating func concatenateInPlace(with other: Self) throws
 }
+
+extension ResourceType where Value: PaginatedListType {
+    public func fetchAllNext() -> AnyTask<Value, Error> {
+        Publishers.While(self.latestValue?.nextCursor != nil) {
+            self.fetch().successPublisher
+        }
+        .convertToTask()
+        .mapTo({ self.latestValue })
+        .tryMap({ try $0.unwrap() })
+        .convertToTask()
+    }
+}
