@@ -157,6 +157,7 @@ extension PaginationCursor: Comparable {
 
 public enum FetchLimit: Codable, ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Hashable {
     case cursor(PaginationCursor)
+    case max(Int)
     case none
     
     public init(integerLiteral value: Int) {
@@ -171,16 +172,19 @@ public enum FetchLimit: Codable, ExpressibleByIntegerLiteral, ExpressibleByNilLi
         switch self {
             case .cursor(let cursor):
                 try encoder.encode(single: cursor)
+            case .max(let value):
+                try encoder.encode(single: value)
             case .none:
                 try encoder.encodeSingleNil()
         }
     }
     
     public init(from decoder: Decoder) throws {
-        if (try? decoder.decodeSingleValueNil()) ?? false {
+        fatalError()
+        /*if (try? decoder.decodeSingleValueNil()) ?? false {
             self = .none
         } else {
             self = .cursor(try decoder.decode(single: PaginationCursor.self))
-        }
+        }*/
     }
 }

@@ -6,7 +6,7 @@ import Swift
 
 public protocol MutableEndpoint: Endpoint {
     typealias BuildRequestTransformContext = TransformMutableEndpointBuildRequestContext<Root, Input, Output, Options>
-    typealias TransformOutputContext = TransformMutableEndpointOutputContext<Root, Input, Output, Options>
+    typealias DecodeOutputTransformContext = TransformMutableEndpointDecodeOutputContext<Root, Input, Output, Options>
     
     func addBuildRequestTransform(
         _ transform: @escaping (Request, TransformMutableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
@@ -26,7 +26,8 @@ public struct TransformMutableEndpointBuildRequestContext<Root: ProgramInterface
     public let options: Options
 }
 
-public struct TransformMutableEndpointOutputContext<Root: ProgramInterface, Input, Output, Options> {
+public struct TransformMutableEndpointDecodeOutputContext<Root: ProgramInterface, Input, Output, Options> {
     public let root: Root
     public let input: Input
+    public let options: Options
 }

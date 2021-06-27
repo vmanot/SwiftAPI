@@ -47,7 +47,7 @@ extension Repository {
                     context: .init(root: self.interface, options: options)
                 )
                 
-                if let response = try? self.cache.decacheValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: self.interface, input: input, request: request)) {
+                if let response = try? self.cache.decacheValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: self.interface, input: input, options: options, request: request)) {
                     task.send(.success(output))
                     
                     return .empty()
@@ -61,7 +61,7 @@ extension Repository {
                         switch result {
                             case .success(let value): do {
                                 do {
-                                    task?.send(.success(try endpoint.decodeOutput(from: value, context: .init(root: self.interface, input: input, request: request))))
+                                    task?.send(.success(try endpoint.decodeOutput(from: value, context: .init(root: self.interface, input: input, options: options, request: request))))
                                 } catch {
                                     task?.send(.error(.runtime(error)))
                                 }
@@ -83,16 +83,16 @@ extension Repository {
     public subscript<Endpoint: API.Endpoint>(
         dynamicMember keyPath: KeyPath<Interface, Endpoint>
     ) -> RunEndpointFunction<Endpoint> where Endpoint.Root == Interface, Endpoint.Options == Void {
-        .init {
-            self.run(keyPath, with: $0)
+        .init { (input, options) in
+            self.run(keyPath, with: input, options: options)
         }
     }
     
     public subscript<Endpoint: API.Endpoint>(
         dynamicMember keyPath: KeyPath<Interface, Endpoint>
     ) -> RunEndpointFunction<Endpoint> where Endpoint.Root == Interface, Endpoint.Options: ExpressibleByNilLiteral {
-        .init {
-            self.run(self.interface[keyPath: keyPath], with: $0, options: nil)
+        .init { (input, options) in
+            self.run(self.interface[keyPath: keyPath], with: input, options: options)
         }
     }
 }
@@ -122,9 +122,10 @@ extension Repository {
     
     public func run<E: Endpoint>(
         _ endpoint: KeyPath<Interface, E>,
-        with input: E.Input
-    ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface, E.Options == Void {
-        run(interface[keyPath: endpoint], with: input, options: ())
+        with input: E.Input,
+        options: E.Options
+    ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
+        run(interface[keyPath: endpoint], with: input, options: options)
     }
 }
 
@@ -151,17 +152,33 @@ private extension ProgramInterfaceError {
 }
 
 public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
-    let run: (Endpoint.Input) -> AnyTask<Endpoint.Output, Endpoint.Root.Error>
+    let run: (Endpoint.Input, Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error>
     
-    public func callAsFunction(_ input: (Endpoint.Input)) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> {
-        run(input)
+    public func callAsFunction(_ input: (Endpoint.Input), options: Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Options == Void {
+        run(input, options)
     }
     
-    public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input: ExpressibleByNilLiteral {
-        run(nil)
+    public func callAsFunction(options: Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input == Void {
+        run((), options)
+    }
+
+    public func callAsFunction(_ input: (Endpoint.Input)) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Options == Void {
+        run(input, ())
     }
     
-    public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input == Void {
-        run(())
+    public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input: ExpressibleByNilLiteral, Endpoint.Options == Void {
+        run(nil, ())
+    }
+    
+    public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input: ExpressibleByNilLiteral, Endpoint.Options: ExpressibleByNilLiteral {
+        run(nil, nil)
+    }
+
+    public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input == Void, Endpoint.Options == Void {
+        run((), ())
+    }
+    
+    public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input == Void, Endpoint.Options: ExpressibleByNilLiteral {
+        run((), nil)
     }
 }

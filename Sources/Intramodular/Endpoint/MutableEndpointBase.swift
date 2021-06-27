@@ -12,7 +12,7 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
     public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output, Options>
     
     private var buildRequestTransform: (_ request: Root.Request, _ context: BuildRequestTransformContext) throws -> Root.Request = { request, context in request }
-    private var outputTransform: (_ output: Output, _ context: TransformOutputContext) throws -> Output = { output, context in output }
+    private var outputTransform: (_ output: Output, _ context: DecodeOutputTransformContext) throws -> Output = { output, context in output }
     
     open var wrappedValue: MutableEndpointBase<Root, Input, Output, Options> {
         self
@@ -53,10 +53,18 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
         from response: Request.Response,
         context: DecodeOutputContext
     ) throws -> Output {
-        try outputTransform(try decodeOutputBase(from: response, context: context), .init(root: context.root, input: context.input))
+        try outputTransform(try decodeOutputBase(from: response, context: context), .init(root: context.root, input: context.input, options: context.options))
     }
     
     public final func addBuildRequestTransform(
+        _ transform: @escaping (Request, TransformMutableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
+    ) {
+        let oldTransform = buildRequestTransform
+        
+        buildRequestTransform = { try transform(oldTransform($0, $1), $1) }
+    }
+    
+    public final func addDecodeOutputTransform(
         _ transform: @escaping (Request, TransformMutableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
     ) {
         let oldTransform = buildRequestTransform
