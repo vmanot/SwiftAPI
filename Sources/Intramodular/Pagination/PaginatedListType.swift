@@ -35,6 +35,7 @@ extension ResourceType where Value: PaginatedListType {
             self.fetch().successPublisher
         }
         .convertToTask()
+        .successPublisher
         .mapTo({ self.latestValue })
         .tryMap({ try $0.unwrap() })
         .convertToTask()

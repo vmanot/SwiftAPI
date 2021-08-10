@@ -92,17 +92,20 @@ public final class RESTfulResourceAccessor<
             
             self.base._lastRootID = repository.interface.id
             
-            repositorySubscription = repository.objectWillChange.receive(on: DispatchQueue.main).sinkResult { [weak self, weak repository] _ in
-                guard let self = self, let repository = repository else {
-                    return
+            repositorySubscription = repository
+                .objectWillChange
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self, weak repository] _ in
+                    guard let self = self, let repository = repository else {
+                        return
+                    }
+                    
+                    if self.base.needsGetCall {
+                        self.base.fetch()
+                    }
+                    
+                    self.base._lastRootID = repository.interface.id
                 }
-                
-                if self.base.needsGetCall {
-                    self.base.fetch()
-                }
-                
-                self.base._lastRootID = repository.interface.id
-            }
         }
     }
 }
