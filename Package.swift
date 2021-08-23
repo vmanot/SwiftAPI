@@ -16,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/vmanot/Compute.git", .branch("master")),
+        .package(url: "https://github.com/vmanot/Diagnostics.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
         .package(url: "https://github.com/vmanot/Swallow.git", .branch("master")),
     ],
@@ -24,6 +25,7 @@ let package = Package(
             name: "API",
             dependencies: [
                 "Compute",
+                "Diagnostics",
                 .product(name: "Logging", package: "swift-log"),
                 "Merge",
                 "Swallow"

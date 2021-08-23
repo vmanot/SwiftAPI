@@ -3,6 +3,7 @@
 //
 
 import FoundationX
+import Diagnostics
 import Merge
 import Swallow
 
@@ -20,6 +21,7 @@ public protocol Repository: Caching, ObservableObject {
     var interface: Interface { get }
     var session: Session { get }
     var cache: Cache { get }
+    var logger: Logger? { get }
     
     func task<Input, Output, Options>(
         for endpoint: AnyEndpoint<Interface, Input, Output, Options>
@@ -27,6 +29,12 @@ public protocol Repository: Caching, ObservableObject {
 }
 
 // MARK: - Implementation -
+
+extension Repository {
+    public var logger: Logger? {
+        nil
+    }
+}
 
 extension Repository {
     public func task<Input, Output, Options>(
@@ -38,9 +46,7 @@ extension Repository {
                 
                 return .empty()
             }
-            
-            let endpoint = endpoint
-            
+                        
             do {
                 let request = try endpoint.buildRequest(
                     from: input,
@@ -57,22 +63,48 @@ extension Repository {
                     .session
                     .task(with: request)
                     .successPublisher
-                    .sinkResult({ [weak task] result in
+                    .sinkResult({ [weak task] (result: Result<Interface.Request.Response, Interface.Request.Error>) in
                         switch result {
                             case .success(let value): do {
                                 do {
-                                    task?.send(.success(try endpoint.decodeOutput(from: value, context: .init(root: self.interface, input: input, options: options, request: request))))
+                                    self.logger?.log(
+                                        level: .debug,
+                                        "Received a request response",
+                                        metadata: ["response": .init(from: value)]
+                                    )
+                                    
+                                    let output = try endpoint.decodeOutput(
+                                        from: value,
+                                        context: .init(
+                                            root: self.interface,
+                                            input: input,
+                                            options: options,
+                                            request: request
+                                        )
+                                    )
+                                    
+                                    task?.send(.success(output))
                                 } catch {
                                     task?.send(.error(.runtime(error)))
+                                    
+                                    self.logger?.log(
+                                        error,
+                                        metadata: ["request": .init(from: request)]
+                                    )
                                 }
                             }
                             case .failure(let error): do {
                                 task?.send(.error(.runtime(error)))
+                                
+                                self.logger?.log(error, metadata: ["request": .init(from: request)])
                             }
                         }
                     })
             } catch {
                 task.send(.error(.runtime(error)))
+                
+                self.logger?.log(level: .notice, "Failed to construct an API request.")
+                self.logger?.log(error)
                 
                 return AnyCancellable.empty()
             }
@@ -96,8 +128,6 @@ extension Repository {
         }
     }
 }
-
-// MARK: - Extensions -
 
 extension Repository {
     public func run<E: Endpoint>(
@@ -161,7 +191,7 @@ public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
     public func callAsFunction(options: Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input == Void {
         run((), options)
     }
-
+    
     public func callAsFunction(_ input: (Endpoint.Input)) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Options == Void {
         run(input, ())
     }
@@ -173,7 +203,7 @@ public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
     public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input: ExpressibleByNilLiteral, Endpoint.Options: ExpressibleByNilLiteral {
         run(nil, nil)
     }
-
+    
     public func callAsFunction() -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input == Void, Endpoint.Options == Void {
         run((), ())
     }
