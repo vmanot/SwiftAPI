@@ -112,7 +112,7 @@ extension RESTfulResource {
                 .map(get.output)
                 .mapError({ $0 as Swift.Error })
             
-            if var _result = try? self.lastGetTaskResult?.get() as? _opaque_PaginatedListType, let newResult = try? result.get() as? _opaque_PaginatedListType {
+            if var _result = try self.lastGetTaskResult?.get() as? _opaque_PaginatedListType, let newResult = try result.get() as? _opaque_PaginatedListType {
                 try _result._opaque_concatenateInPlace(with: newResult)
                 
                 result = .success(try cast(_result, to: Value.self))

@@ -32,6 +32,18 @@ public enum PaginationCursor: Hashable {
 }
 
 extension PaginationCursor {
+    public var offsetValue: Int? {
+        guard case let .offset(offset) = self else {
+            return nil
+        }
+        
+        return offset
+    }
+    
+    public func getOffsetValue() throws -> Int {
+        try offsetValue.unwrap()
+    }
+    
     public var stringValue: String? {
         guard case let .string(string) = self else {
             return nil
@@ -47,7 +59,6 @@ extension PaginationCursor {
         
         return url
     }
-    
 }
 
 // MARK: - Conformances -
@@ -182,9 +193,9 @@ public enum FetchLimit: Codable, ExpressibleByIntegerLiteral, ExpressibleByNilLi
     public init(from decoder: Decoder) throws {
         fatalError()
         /*if (try? decoder.decodeSingleValueNil()) ?? false {
-            self = .none
-        } else {
-            self = .cursor(try decoder.decode(single: PaginationCursor.self))
-        }*/
+         self = .none
+         } else {
+         self = .cursor(try decoder.decode(single: PaginationCursor.self))
+         }*/
     }
 }

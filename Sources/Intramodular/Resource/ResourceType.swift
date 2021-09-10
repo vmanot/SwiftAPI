@@ -19,6 +19,7 @@ public protocol ResourceType: _opaque_ResourceType, ObservableObject {
     
     func unwrap() throws -> Value?
     
+    @discardableResult
     func fetch() -> AnyTask<Value, Error>
 }
 

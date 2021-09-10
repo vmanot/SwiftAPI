@@ -6,7 +6,7 @@ import Compute
 import Swallow
 import Swift
 
-public struct CursorPaginatedList<Item>: Initiable, PaginatedListType {
+public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializable {
     public enum CodingKeys: CodingKey {
         case _cursorsConsumed
         case _tail

@@ -20,9 +20,7 @@ extension _opaque_PaginatedListType where Self: PaginatedListType {
     }
 }
 
-public protocol PaginatedListType: _opaque_PaginatedListType, Partializable {
-    associatedtype Partial
-    
+public protocol PaginatedListType: _opaque_PaginatedListType {
     var nextCursor: PaginationCursor? { get }
     
     mutating func setNextCursor(_ cursor: PaginationCursor?) throws
@@ -31,13 +29,25 @@ public protocol PaginatedListType: _opaque_PaginatedListType, Partializable {
 
 extension ResourceType where Value: PaginatedListType {
     public func fetchAllNext() -> AnyTask<Value, Error> {
-        Publishers.While(self.latestValue?.nextCursor != nil) {
-            self.fetch().successPublisher
+        defer {
+            if latestValue == nil {
+                fetch()
+            }
         }
-        .convertToTask()
-        .successPublisher
-        .mapTo({ self.latestValue })
-        .tryMap({ try $0.unwrap() })
-        .convertToTask()
+        
+        // Fetch the first available value and go to town with it.
+        return publisher
+            .tryMap({ try $0.get() })
+            .first()
+            .flatMap { value in
+                Publishers.While(value.nextCursor != nil) {
+                    self.fetch().successPublisher
+                }
+                .convertToTask()
+                .successPublisher
+                .mapTo({ self.latestValue })
+                .tryMap({ try $0.unwrap() })
+            }
+            .convertToTask()
     }
 }

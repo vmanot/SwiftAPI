@@ -7,7 +7,7 @@ import Swallow
 import Swift
 
 public protocol PaginatedResponse {
-    associatedtype PaginatedListRepresentation: PaginatedListType
+    associatedtype PaginatedListRepresentation: PaginatedListType & Partializable
     
     func convert() throws -> Partial<PaginatedListRepresentation>
 }
