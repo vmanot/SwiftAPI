@@ -5,7 +5,7 @@
 import Combine
 import Swift
 
-public enum CodeNameSpacingConvention: String, Codable {
+public enum CodeNamespacingConvention: String, Codable {
     case camelCase // fooBar
     case snakeCase // foo_bar
     case kebabCase // foo-bar
