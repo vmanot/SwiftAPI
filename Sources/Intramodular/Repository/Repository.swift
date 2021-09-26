@@ -15,13 +15,14 @@ public protocol Repository: Caching, ObservableObject {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
     associatedtype Cache = NoCache<Session.Request, Session.Request.Result> where Cache.Key == Session.Request, Cache.Value == Session.Request.Response
+    associatedtype LoggerType: LoggerProtocol = Logging.Logger
     
     typealias Schema = Interface.Schema
     
     var interface: Interface { get }
     var session: Session { get }
     var cache: Cache { get }
-    var logger: Logger? { get }
+    var logger: LoggerType? { get }
     
     func task<Input, Output, Options>(
         for endpoint: AnyEndpoint<Interface, Input, Output, Options>
@@ -30,7 +31,7 @@ public protocol Repository: Caching, ObservableObject {
 
 // MARK: - Implementation -
 
-extension Repository {
+extension Repository where LoggerType == Logging.Logger {
     public var logger: Logger? {
         nil
     }
@@ -46,7 +47,7 @@ extension Repository {
                 
                 return .empty()
             }
-                        
+            
             do {
                 let request = try endpoint.buildRequest(
                     from: input,
@@ -67,10 +68,9 @@ extension Repository {
                         switch result {
                             case .success(let value): do {
                                 do {
-                                    self.logger?.log(
-                                        level: .debug,
+                                    self.logger?.debug(
                                         "Received a request response",
-                                        metadata: ["response": .init(from: value)]
+                                        metadata: ["response": value]
                                     )
                                     
                                     let output = try endpoint.decodeOutput(
@@ -87,29 +87,29 @@ extension Repository {
                                 } catch {
                                     task?.send(.error(.runtime(error)))
                                     
-                                    self.logger?.log(
+                                    self.logger?.error(
                                         error,
-                                        metadata: ["request": .init(from: request)]
+                                        metadata: ["request": request]
                                     )
                                 }
                             }
                             case .failure(let error): do {
                                 task?.send(.error(.runtime(error)))
                                 
-                                self.logger?.log(error, metadata: ["request": .init(from: request)])
+                                self.logger?.error(error, metadata: ["request": request])
                             }
                         }
                     })
             } catch {
                 task.send(.error(.runtime(error)))
                 
-                self.logger?.log(level: .notice, "Failed to construct an API request.")
-                self.logger?.log(error)
+                self.logger?.notice("Failed to construct an API request.")
+                self.logger?.error(error)
                 
                 return AnyCancellable.empty()
             }
         })
-        .eraseToAnyTask()
+            .eraseToAnyTask()
     }
     
     public subscript<Endpoint: API.Endpoint>(
