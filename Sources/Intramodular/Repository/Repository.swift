@@ -192,12 +192,8 @@ private extension ProgramInterfaceError {
 public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
     let run: (Endpoint.Input, Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error>
     
-    public func callAsFunction(_ input: (Endpoint.Input), options: Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Options == Void {
+    public func callAsFunction(_ input: (Endpoint.Input), options: Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> {
         run(input, options)
-    }
-    
-    public func callAsFunction(options: Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Input == Void {
-        run((), options)
     }
     
     public func callAsFunction(_ input: (Endpoint.Input)) -> AnyTask<Endpoint.Output, Endpoint.Root.Error> where Endpoint.Options == Void {
