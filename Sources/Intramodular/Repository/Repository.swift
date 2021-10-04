@@ -127,6 +127,14 @@ extension Repository {
             self.run(self.interface[keyPath: keyPath], with: input, options: options)
         }
     }
+    
+    public subscript<Endpoint: API.Endpoint>(
+        dynamicMember keyPath: KeyPath<Interface, Endpoint>
+    ) -> RunEndpointFunction<Endpoint> where Endpoint.Root == Interface {
+        .init { (input, options) in
+            self.run(self.interface[keyPath: keyPath], with: input, options: options)
+        }
+    }
 }
 
 extension Repository {
