@@ -47,7 +47,7 @@ public final class RESTfulResource<
             .compactMap({ $0.flatMap(Result.init(from:)) })
             .shareReplay(1)
             .onSubscribe {
-                if self.lastGetTaskResult == nil {
+                if self.needsGetCall  {
                     self.fetch()
                 }
             }
@@ -93,12 +93,14 @@ extension RESTfulResource {
             return true
         }
         
+        // Check if resource fetching was last canceled.
         if let lastGetTaskResult = lastGetTaskResult {
-            if lastGetTaskResult == .canceled || lastGetTaskResult == .error {
+            if lastGetTaskResult == .canceled {
                 return false
             }
         }
         
+        // Check if the resource is currently being fetched.
         guard lastGetTask == nil else {
             return false
         }
