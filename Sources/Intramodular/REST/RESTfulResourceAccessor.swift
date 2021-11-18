@@ -95,11 +95,7 @@ public final class RESTfulResourceAccessor<
             repositorySubscription = repository
                 .objectWillChange
                 .receive(on: DispatchQueue.main)
-                .sink { [weak self, weak repository] _ in
-                    guard let self = self, let repository = repository else {
-                        return
-                    }
-                    
+                .sink { [unowned self, unowned repository] _ in                    
                     if self.base.needsGetCall {
                         self.base.fetch()
                     }

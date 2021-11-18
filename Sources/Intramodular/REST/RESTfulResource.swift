@@ -2,6 +2,7 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Combine
 import Dispatch
 import Merge
 import Swallow
@@ -43,8 +44,13 @@ public final class RESTfulResource<
     
     public var publisher: AnyPublisher<Result<Value, Error>, Never> {
         $lastGetTaskResult
-            .compactMap({ $0 })
-            .compactMap({ Result(from: $0) })
+            .compactMap({ $0.flatMap(Result.init(from:)) })
+            .shareReplay(1)
+            .onSubscribe {
+                if self.lastGetTaskResult == nil {
+                    self.fetch()
+                }
+            }
             .eraseToAnyPublisher()
     }
     
