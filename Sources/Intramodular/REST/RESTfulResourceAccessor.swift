@@ -170,6 +170,8 @@ extension RESTfulResourceAccessor {
         )
     }
     
+    // MARK: - Dependent Output
+
     public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
@@ -199,6 +201,72 @@ extension RESTfulResourceAccessor {
             set: .init()
         )
     }
+    
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        from input: KeyPath<Container, GetEndpoint.Input>
+    ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { $0[keyPath: input] },
+                output: { $0 }
+            ),
+            set: .init()
+        )
+    }
+    
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        from input: KeyPath<Container, GetEndpoint.Input?>
+    ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { try $0[keyPath: input].unwrap() },
+                output: { $0 }
+            ),
+            set: .init()
+        )
+    }
+    
+    // MARK: - Dependent Output + Transform
+    
+    /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        _ transform: KeyPath<GetEndpoint.Output, Value>,
+        from input: KeyPath<Container, GetEndpoint.Input?>
+    ) where SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { try $0[keyPath: input].unwrap() },
+                output: { $0[keyPath: transform] }
+            ),
+            set: .init()
+        )
+    }
+    
+    /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        _ transform: KeyPath<GetEndpoint.Output, Value?>,
+        from input: KeyPath<Container, GetEndpoint.Input?>
+    ) where SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                endpoint: get,
+                input: { try $0[keyPath: input].unwrap() },
+                output: { try $0[keyPath: transform].unwrap() }
+            ),
+            set: .init()
+        )
+    }
 }
 
 // MARK: - API -
@@ -210,21 +278,4 @@ extension Repository where Interface: RESTfulInterface {
         GetEndpoint,
         SetEndpoint
     > where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
-}
-
-// MARK: - Auxiliary Implementation -
-
-extension RESTfulResourceAccessor {
-    @usableFromInline
-    final class ResourceDependency<R: ResourceAccessor>: Resource.EndpointDependency {
-        let location: KeyPath<Container, R>
-        
-        init(location: KeyPath<Container, R>) {
-            self.location = location
-        }
-        
-        override func isAvailable(in repository: Container) -> Bool {
-            repository[keyPath: location].wrappedValue != nil
-        }
-    }
 }
