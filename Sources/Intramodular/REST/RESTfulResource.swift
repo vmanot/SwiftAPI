@@ -42,7 +42,7 @@ public final class RESTfulResource<
         return repository
     }
     
-    public var publisher: AnyPublisher<Result<Value, Error>, Never> {
+    public lazy private(set) var publisher: AnyPublisher<Result<Value, Error>, Never> = {
         $lastGetTaskResult
             .compactMap({ $0.flatMap(Result.init(from:)) })
             .shareReplay(1)
@@ -52,7 +52,7 @@ public final class RESTfulResource<
                 }
             }
             .eraseToAnyPublisher()
-    }
+    }()
     
     public var latestValue: Value? {
         get {
