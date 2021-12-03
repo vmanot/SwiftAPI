@@ -4,8 +4,9 @@
 
 import Swallow
 
-public protocol EndpointBuilderPropertyWrapper: MutablePropertyWrapper, MutableEndpoint where WrappedValue == Base, Root == Base.Root, Input == Base.Input, Output == Base.Output, Options == Base.Options {
-    associatedtype Base: MutableEndpoint
+/// A property wrapper that refines an endpoint.
+public protocol EndpointBuilderPropertyWrapper: MutablePropertyWrapper, ModifiableEndpoint where WrappedValue == Base, Root == Base.Root, Input == Base.Input, Output == Base.Output, Options == Base.Options {
+    associatedtype Base: ModifiableEndpoint
 }
 
 extension EndpointBuilderPropertyWrapper {

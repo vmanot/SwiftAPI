@@ -54,7 +54,7 @@ extension Repository {
                     context: .init(root: self.interface, options: options)
                 )
                 
-                if let response = try? self.cache.decacheValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: self.interface, input: input, options: options, request: request)) {
+                if let response = try? self.cache.decacheInMemoryValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: self.interface, input: input, options: options, request: request)) {
                     task.send(.success(output))
                     
                     return .empty()

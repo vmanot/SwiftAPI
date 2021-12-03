@@ -5,7 +5,7 @@
 import Swallow
 
 @propertyWrapper
-open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: MutableEndpoint, Initiable {
+open class ModifiableEndpointBase<Root: ProgramInterface, Input, Output, Options>: ModifiableEndpoint, Initiable {
     public typealias Request = Root.Request
     
     public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>
@@ -14,7 +14,7 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
     private var buildRequestTransform: (_ request: Root.Request, _ context: BuildRequestTransformContext) throws -> Root.Request = { request, context in request }
     private var outputTransform: (_ output: Output, _ context: DecodeOutputTransformContext) throws -> Output = { output, context in output }
     
-    open var wrappedValue: MutableEndpointBase<Root, Input, Output, Options> {
+    open var wrappedValue: ModifiableEndpointBase<Root, Input, Output, Options> {
         self
     }
     
@@ -57,7 +57,7 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
     }
     
     public final func addBuildRequestTransform(
-        _ transform: @escaping (Request, TransformMutableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
+        _ transform: @escaping (Request, TransformModifiableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
     ) {
         let oldTransform = buildRequestTransform
         
@@ -65,7 +65,7 @@ open class MutableEndpointBase<Root: ProgramInterface, Input, Output, Options>: 
     }
     
     public final func addDecodeOutputTransform(
-        _ transform: @escaping (Request, TransformMutableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
+        _ transform: @escaping (Request, TransformModifiableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
     ) {
         let oldTransform = buildRequestTransform
         
