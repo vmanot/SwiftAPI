@@ -23,10 +23,6 @@ public protocol Repository: Caching, ObservableObject {
     var session: Session { get }
     var cache: Cache { get }
     var logger: LoggerType? { get }
-    
-    func task<Input, Output, Options>(
-        for endpoint: AnyEndpoint<Interface, Input, Output, Options>
-    ) -> AnyParametrizedTask<(input: Input, options: Options), Output, Interface.Error>
 }
 
 // MARK: - Implementation -
@@ -38,80 +34,6 @@ extension Repository where LoggerType == Logging.Logger {
 }
 
 extension Repository {
-    public func task<Input, Output, Options>(
-        for endpoint: AnyEndpoint<Interface, Input, Output, Options>
-    ) -> AnyParametrizedTask<(input: Input, options: Options), Output, Interface.Error> {
-        return ParametrizedPassthroughTask(body: { (task: ParametrizedPassthroughTask) in
-            guard let (input, options) = task.input else {
-                task.send(.error(.missingInput()))
-                
-                return .empty()
-            }
-            
-            do {
-                let request = try endpoint.buildRequest(
-                    from: input,
-                    context: .init(root: self.interface, options: options)
-                )
-                
-                if let response = try? self.cache.decacheInMemoryValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: self.interface, input: input, options: options, request: request)) {
-                    task.send(.success(output))
-                    
-                    return .empty()
-                }
-                
-                return self
-                    .session
-                    .task(with: request)
-                    .successPublisher
-                    .sinkResult({ [weak task] (result: Result<Interface.Request.Response, Interface.Request.Error>) in
-                        switch result {
-                            case .success(let value): do {
-                                do {
-                                    self.logger?.debug(
-                                        "Received a request response",
-                                        metadata: ["response": value]
-                                    )
-                                    
-                                    let output = try endpoint.decodeOutput(
-                                        from: value,
-                                        context: .init(
-                                            root: self.interface,
-                                            input: input,
-                                            options: options,
-                                            request: request
-                                        )
-                                    )
-                                    
-                                    task?.send(.success(output))
-                                } catch {
-                                    task?.send(.error(.runtime(error)))
-                                    
-                                    self.logger?.error(
-                                        error,
-                                        metadata: ["request": request]
-                                    )
-                                }
-                            }
-                            case .failure(let error): do {
-                                task?.send(.error(.runtime(error)))
-                                
-                                self.logger?.error(error, metadata: ["request": request])
-                            }
-                        }
-                    })
-            } catch {
-                task.send(.error(.runtime(error)))
-                
-                self.logger?.notice("Failed to construct an API request.")
-                self.logger?.error(error)
-                
-                return AnyCancellable.empty()
-            }
-        })
-            .eraseToAnyTask()
-    }
-    
     public subscript<Endpoint: API.Endpoint>(
         dynamicMember keyPath: KeyPath<Interface, Endpoint>
     ) -> RunEndpointFunction<Endpoint> where Endpoint.Root == Interface, Endpoint.Options == Void {
@@ -143,19 +65,18 @@ extension Repository {
         with input: E.Input,
         options: E.Options
     ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
-        let result = task(for: .init(endpoint))
+        let task = RepositoryRunEndpointTask(
+            repository: self,
+            endpoint: endpoint,
+            input: input,
+            options: options,
+            cache: AnyCache(cache)
+        )
         
-        do {
-            try result.receive((input: input, options: options))
-        } catch {
-            return .failure(.runtime(error))
-        }
+        task.start()
+        task.store(in: session.cancellables)
         
-        result.start()
-        
-        session.cancellables.insert(result)
-        
-        return result.eraseToAnyTask()
+        return task.eraseToAnyTask()
     }
     
     public func run<E: Endpoint>(
@@ -168,26 +89,6 @@ extension Repository {
 }
 
 // MARK: - Auxiliary Implementation -
-
-private enum _DefaultRepositoryError: Error {
-    case missingInput
-    case invalidInput
-    case invalidOutput
-}
-
-private extension ProgramInterfaceError {
-    static func missingInput() -> Self {
-        .runtime(_DefaultRepositoryError.missingInput)
-    }
-    
-    static func invalidInput() -> Self {
-        .runtime(_DefaultRepositoryError.invalidInput)
-    }
-    
-    static func invalidOutput() -> Self {
-        .runtime(_DefaultRepositoryError.invalidOutput)
-    }
-}
 
 public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
     let run: (Endpoint.Input, Endpoint.Options) -> AnyTask<Endpoint.Output, Endpoint.Root.Error>
