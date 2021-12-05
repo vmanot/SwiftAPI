@@ -28,29 +28,13 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
     var progress: Progress {
         base.progress
     }
-    
-    func start() {
-        base.start()
-    }
-    
-    func pause() throws {
-        try base.pause()
-    }
-    
-    func resume() throws {
-        try base.resume()
-    }
-    
-    func cancel() {
-        base.cancel()
-    }
-    
+        
     init(
         repository: Repository,
         endpoint: Endpoint,
         input: Endpoint.Input,
         options: Endpoint.Options,
-        cache: AnyCache<Endpoint.Request, Endpoint.Request.Response>
+        cache: AnyKeyedCache<Endpoint.Request, Endpoint.Request.Response>
     ) {
         self.repository = repository
         self.endpoint = endpoint
@@ -120,5 +104,21 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
             }
         })
         .eraseToAnyTask()
+    }
+    
+    func start() {
+        base.start()
+    }
+    
+    func pause() throws {
+        try base.pause()
+    }
+    
+    func resume() throws {
+        try base.resume()
+    }
+    
+    func cancel() {
+        base.cancel()
     }
 }

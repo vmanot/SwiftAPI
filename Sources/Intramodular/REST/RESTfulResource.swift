@@ -7,7 +7,7 @@ import Dispatch
 import Merge
 import Swallow
 
-/// An accessor for a REST resource.
+/// A REST resource.
 ///
 /// This type is responsible for getting/setting resource values.
 public final class RESTfulResource<
@@ -268,7 +268,7 @@ extension RESTfulResource {
             var getEndpointOptions = try getEndpoint.makeDefaultOptions()
             
             if let latestValue = latestValue as? _opaque_PaginatedListType {
-                if var _getEndpointOptions = getEndpointOptions as? SpecifiesPaginationCursor {
+                if var _getEndpointOptions = getEndpointOptions as? CursorPaginated {
                     _getEndpointOptions.paginationCursor = latestValue.nextCursor
                     
                     getEndpointOptions = try cast(_getEndpointOptions)

@@ -11,18 +11,20 @@ import Swallow
 ///
 /// The combination of a program interface and a compatible request session.
 @dynamicMemberLookup
-public protocol Repository: Caching, ObservableObject {
+public protocol Repository: ObservableObject {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
-    associatedtype Cache = NoCache<Session.Request, Session.Request.Result> where Cache.Key == Session.Request, Cache.Value == Session.Request.Response
+    associatedtype SessionCache: KeyedCache = EmptyKeyedCache<Session.Request, Session.Request.Result> where SessionCache.Key == Session.Request, SessionCache.Value == Session.Request.Response
+    associatedtype ResourceCache: KeyedCodingCache = EmptyKeyedCache<AnyCodingKey, AnyCodable>
     associatedtype LoggerType: LoggerProtocol = Logging.Logger
     
     typealias Schema = Interface.Schema
     
+    var logger: LoggerType? { get }
     var interface: Interface { get }
     var session: Session { get }
-    var cache: Cache { get }
-    var logger: LoggerType? { get }
+    var sessionCache: SessionCache { get }
+    var resourceCache: ResourceCache { get }
 }
 
 // MARK: - Implementation -
@@ -30,6 +32,12 @@ public protocol Repository: Caching, ObservableObject {
 extension Repository where LoggerType == Logging.Logger {
     public var logger: Logger? {
         nil
+    }
+}
+
+extension Repository where ResourceCache == EmptyKeyedCache<AnyCodingKey, AnyCodable> {
+    public var resourceCache: ResourceCache {
+        .init()
     }
 }
 
@@ -70,7 +78,7 @@ extension Repository {
             endpoint: endpoint,
             input: input,
             options: options,
-            cache: AnyCache(cache)
+            cache: .init(sessionCache)
         )
         
         task.start()
