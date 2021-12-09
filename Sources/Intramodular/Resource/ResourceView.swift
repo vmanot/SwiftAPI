@@ -2,8 +2,8 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Swallow
 import SwiftUIX
-import SwiftUI
 
 /// A view that wraps around a resource.
 public struct ResourceView<Resource, Placeholder: View, Success: View, Failure: View>: View {

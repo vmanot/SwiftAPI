@@ -30,7 +30,7 @@ public protocol Repository: ObservableObject {
 // MARK: - Implementation -
 
 extension Repository where LoggerType == Logging.Logger {
-    public var logger: Logger? {
+    public var logger: LoggerType? {
         nil
     }
 }
