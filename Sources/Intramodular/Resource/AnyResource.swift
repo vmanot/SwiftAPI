@@ -5,6 +5,9 @@
 import Merge
 import Swallow
 
+/// A type-erased resource.
+///
+/// An instance of `AnyResource` forwards its operations to an underlying base resource having the same `Value` type, hiding the specifics of the underlying resource.
 public class AnyResource<Value>: ResourceType {
     public let base: _opaque_ResourceType
     public let objectWillChange: AnyObjectWillChangePublisher
@@ -13,6 +16,9 @@ public class AnyResource<Value>: ResourceType {
     let latestValueImpl: () -> Value?
     let unwrapImpl: () throws -> Value?
     let fetchImpl: () -> AnyTask<Value, Error>
+    
+    @Inout
+    public var configuration: ResourceConfiguration<Value>
     
     public var latestValue: Value? {
         latestValueImpl()
@@ -25,6 +31,7 @@ public class AnyResource<Value>: ResourceType {
         self.objectWillChange = .init(from: resource)
         self.publisher = resource.publisher.eraseToAnyPublisher()
         
+        self._configuration = .init(getter: { resource.configuration }, setter: { resource.configuration = $0 })
         self.latestValueImpl = { resource.latestValue }
         self.unwrapImpl = resource.unwrap
         self.fetchImpl = resource.fetch
@@ -39,6 +46,8 @@ public class AnyResource<Value>: ResourceType {
         fetchImpl()
     }
 }
+
+// MARK: - API -
 
 extension Result {
     public init?(

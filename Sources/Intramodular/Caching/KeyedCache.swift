@@ -38,12 +38,6 @@ public protocol KeyedCache {
     func removeAllCachedValues() -> AnySingleOutputPublisher<Void, Error>
 }
 
-public protocol KeyedCodingCache: KeyedCache where Key == AnyCodingKey, Value == AnyCodable {
-    func cache<T: Encodable>(_ value: T, forKey key: AnyCodingKey) -> AnySingleOutputPublisher<Void, Error>
-    func decache<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) -> AnySingleOutputPublisher<T?, Error>
-    func decacheInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) throws -> T?
-}
-
 // MARK: - Implementation -
 
 extension KeyedCache {
@@ -91,15 +85,5 @@ extension EmptyKeyedCache: KeyedCodingCache where Key == AnyCodingKey, Value == 
     
     public func decacheInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: Key) throws -> T?  {
         nil
-    }
-}
-
-// MARK: - API -
-
-extension KeyedCodingCache {
-    public func code<Key: Hashable & StringConvertible, Value: Codable>(
-        _ type: Value.Type
-    ) -> AnyKeyedCache<Key, Value> {
-        .init(self, type: type)
     }
 }

@@ -15,35 +15,59 @@ public final class RESTfulResource<
     Repository: API.Repository,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
->: CancellablesHolder, RepositoryResourceType where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
-    public typealias Root = Repository.Interface
+>: CancellablesHolder, ResourceType where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
+    typealias EndpointCoordinator<E: Endpoint> = RESTfulResourceEndpointCoordinator<Repository, E, Value> where Repository.Interface == E.Root
+        
+    public var configuration: ResourceConfiguration<Value> {
+        didSet {
+            decacheValueIfNecessary()
+        }
+    }
     
-    fileprivate let get: EndpointCoordinator<GetEndpoint>
-    fileprivate let dependenciesForGet: [EndpointDependency]
-    fileprivate let set: EndpointCoordinator<SetEndpoint>
-    fileprivate let dependenciesForSet: [EndpointDependency]
+    private let get: EndpointCoordinator<GetEndpoint>
+    private let set: EndpointCoordinator<SetEndpoint>
     
-    var _lastRootID: Root.ID?
+    private var _lastRootID: Repository.Interface.ID?
     
-    @Published fileprivate var _wrappedValue: Value?
-    @Published fileprivate var lastGetTask: AnyTask<GetEndpoint.Output, Root.Error>?
-    @Published fileprivate var lastGetTaskResult: TaskResult<Value, Swift.Error>?
-    @Published fileprivate var lastSetTask: AnyTask<SetEndpoint.Output, Root.Error>?
-    @Published fileprivate var lastSetTaskResult: TaskResult<Void, Swift.Error>?
+    @Published private var _wrappedValue: Value? {
+        didSet {
+            cacheValueIfNecessary()
+        }
+    }
     
     @usableFromInline
-    weak var _repository: Repository?
-    
-    public var repository: Repository {
-        guard let repository = _repository else {
-            fatalError("Could not resolve a repository for this resource.")
+    weak var _repository: Repository? {
+        didSet {
+            get.parent = _repository
+            set.parent = _repository
+            
+            if oldValue == nil, let repository = _repository {
+                if let repositoryObjectWillChange = repository.objectWillChange as? _opaque_VoidSender {
+                    objectWillChange
+                        .receiveOnMainQueue()
+                        .publish(to: repositoryObjectWillChange)
+                        .subscribe(in: cancellables)
+                }
+                
+                _lastRootID = repository.interface.id
+                
+                repository
+                    .objectWillChange
+                    .receive(on: DispatchQueue.main)
+                    .sink { [unowned self, unowned repository] _ in
+                        if needsGetCall {
+                            self.fetch()
+                        }
+                        
+                        self._lastRootID = repository.interface.id
+                    }
+                    .store(in: cancellables)
+            }
         }
-        
-        return repository
     }
     
     public lazy private(set) var publisher: AnyPublisher<Result<Value, Error>, Never> = {
-        $lastGetTaskResult
+        get.$lastResult
             .compactMap({ $0.flatMap(Result.init(from:)) })
             .shareReplay(1)
             .onSubscribe {
@@ -66,20 +90,38 @@ public final class RESTfulResource<
         .init(self)
     }
     
+    init(
+        configuration: ResourceConfiguration<Value>,
+        get: EndpointCoordinator<GetEndpoint>,
+        set: EndpointCoordinator<SetEndpoint>
+    ) {
+        self.configuration = configuration
+        self.get = get
+        self.set = set
+    }
+    
     public func unwrap() throws -> Value? {
         latestValue // FIXME!!!
     }
     
-    init(
-        get: EndpointCoordinator<GetEndpoint>,
-        dependenciesForGet: [EndpointDependency],
-        set: EndpointCoordinator<SetEndpoint>,
-        dependenciesForSet: [EndpointDependency]
-    ) {
-        self.get = get
-        self.dependenciesForGet = dependenciesForGet
-        self.set = set
-        self.dependenciesForSet = dependenciesForSet
+    @discardableResult
+    public func fetch() -> AnyTask<Value, Error> {
+        let getTask = get.run()
+        
+        getTask
+            .successPublisher
+            .receiveOnMainQueue()
+            .sinkResult(in: cancellables) { result in
+                if let value = result.leftValue {
+                    self._wrappedValue = value
+                } else {
+                    if self._wrappedValue != nil {
+                        self._wrappedValue = nil
+                    }
+                }
+            }
+        
+        return getTask
     }
 }
 
@@ -94,201 +136,48 @@ extension RESTfulResource {
         }
         
         // Check if resource fetching was last canceled.
-        if let lastGetTaskResult = lastGetTaskResult {
+        if let lastGetTaskResult = get.lastResult {
             if lastGetTaskResult == .canceled {
                 return false
             }
         }
         
         // Check if the resource is currently being fetched.
-        guard lastGetTask == nil else {
+        guard get.endpointTask == nil else {
             return false
         }
         
         return _wrappedValue == nil
     }
-    
-    func receiveGetEndpointOutput(
-        _ output: TaskResult<GetEndpoint.Output, Root.Error>
-    ) -> TaskResult<Value, Error> {
-        var result: TaskResult<Value, Error>
-        
-        lastGetTask = nil
-        
-        do {
-            result = try output
-                .map(get.output)
-                .mapError({ $0 as Swift.Error })
-            
-            if var _result = try self.lastGetTaskResult?.get() as? _opaque_PaginatedListType, let newResult = try result.get() as? _opaque_PaginatedListType {
-                try _result._opaque_concatenateInPlace(with: newResult)
-                
-                result = .success(try cast(_result, to: Value.self))
-            }
-        } catch {
-            result = .error(error)
+
+    private func decacheValueIfNecessary()  {
+        guard configuration.cachePolicy.returnsCacheData, let cache = _repository?.resourceCache, let key = configuration.persistentIdentifier else {
+            return
         }
-            
-        self.lastGetTaskResult = result
         
-        _wrappedValue = result.successValue
-
-        return result
-    }
-}
-
-// MARK: - Initializers -
-
-extension RESTfulResource  {
-    public convenience init(
-        repository: Repository,
-        get: KeyPath<Root, GetEndpoint>,
-        _ getValueKeyPath: KeyPath<GetEndpoint.Output, Value>
-    ) where GetEndpoint.Input: Initiable, SetEndpoint == NeverEndpoint<Root> {
-        self.init(
-            get: .init(
-                endpoint: get,
-                input: { _ in .init() },
-                output: { $0[keyPath: getValueKeyPath] }
-            ),
-            dependenciesForGet: [],
-            set: .init(),
-            dependenciesForSet: []
-        )
-        
-        self._repository = repository
-    }
-    
-    public convenience init(
-        repository: Repository,
-        get: KeyPath<Root, GetEndpoint>
-    ) where GetEndpoint.Input: ExpressibleByNilLiteral, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
-        self.init(
-            get: .init(
-                endpoint: get,
-                input: { _ in .init(nilLiteral: ()) },
-                output: { $0 }
-            ),
-            dependenciesForGet: [],
-            set: .init(),
-            dependenciesForSet: []
-        )
-        
-        self._repository = repository
-    }
-    
-    public convenience init(
-        repository: Repository,
-        get: KeyPath<Root, GetEndpoint>
-    ) where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
-        self.init(
-            get: .init(
-                endpoint: get,
-                input: { _ in .init() },
-                output: { $0 }
-            ),
-            dependenciesForGet: [],
-            set: .init(),
-            dependenciesForSet: []
-        )
-        
-        self._repository = repository
-    }
-    
-    public convenience init(
-        repository: Repository,
-        get: KeyPath<Root, GetEndpoint>
-    ) where GetEndpoint.Input == Void, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
-        self.init(
-            get: .init(
-                endpoint: get,
-                input: { _ in () },
-                output: { $0 }
-            ),
-            dependenciesForGet: [],
-            set: .init(),
-            dependenciesForSet: []
-        )
-        
-        self._repository = repository
-    }
-    
-    public convenience init(
-        repository: Repository,
-        get: KeyPath<Root, GetEndpoint>,
-        from getInput: GetEndpoint.Input
-    ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
-        self.init(
-            get: .init(
-                endpoint: get,
-                input: { _ in getInput },
-                output: { $0 }
-            ),
-            dependenciesForGet: [],
-            set: .init(),
-            dependenciesForSet: []
-        )
-        
-        self._repository = repository
-    }
-}
-
-// MARK: - Conformances -
-
-extension RESTfulResource {
-    @discardableResult
-    public func fetch() -> AnyTask<Value, Error> {
-        do {
-            try validateDependencyResolution()
-            
-            let task = try createTaskForGetEndpoint()
-            let resultTask = PassthroughTask<Value, Error>()
-            
-            task.resultPublisher
-                .receiveOnMainQueue()
-                .sink(in: cancellables) { [weak self] result in
-                    guard let self = self else {
-                        return
-                    }
-                    
-                    resultTask.send(status: .init(self.receiveGetEndpointOutput(result)))
-                }
-            
-            return resultTask.eraseToAnyTask()
-        } catch {
-            return .failure(error)
-        }
-    }
-    
-    private func createTaskForGetEndpoint() throws ->  AnyTask<GetEndpoint.Output, Repository.Interface.Error> {
-        do {
-            lastGetTask?.cancel()
-            
-            let getEndpoint = try get.endpoint(repository)
-            var getEndpointOptions = try getEndpoint.makeDefaultOptions()
-            
-            if let latestValue = latestValue as? _opaque_PaginatedListType {
-                if var _getEndpointOptions = getEndpointOptions as? CursorPaginated {
-                    _getEndpointOptions.paginationCursor = latestValue.nextCursor
-                    
-                    getEndpointOptions = try cast(_getEndpointOptions)
+        cache
+            .decache(Value.self, forKey: key)
+            .toResultPublisher()
+            .sink {
+                if self._wrappedValue == nil {
+                    self._wrappedValue = try? $0.get()
                 }
             }
-            
-            let task = repository.run(
-                try get.endpoint(repository),
-                with: try get.input(repository),
-                options: getEndpointOptions
-            )
-            
-            self.lastGetTask = task
-            
-            return task
-        } catch {
-            lastGetTaskResult = .error(error)
-            
-            throw error
+            .store(in: cancellables)
+    }
+    
+    private func cacheValueIfNecessary() {
+        guard configuration.cachePolicy.returnsCacheData, let cache = _repository?.resourceCache, let key = configuration.persistentIdentifier else {
+            return
         }
+        
+        guard let value = latestValue else {
+            return
+        }
+        
+        cache
+            .cache(value, forKey: key)
+            .subscribe(in: cancellables)
     }
     
     private func validateDependencyResolution() throws {
@@ -296,7 +185,7 @@ extension RESTfulResource {
             throw RESTfulResourceError.repositoryResolutionFailed
         }
         
-        for dependency in dependenciesForGet {
+        for dependency in try get.dependencyGraph(repository) {
             guard dependency.isAvailable(in: repository) else {
                 throw RESTfulResourceError.dependencyResolutionFailed
             }
@@ -304,66 +193,21 @@ extension RESTfulResource {
     }
 }
 
+// MARK: - Conformances -
+
+extension RESTfulResource: Cancellable {
+    public func cancel() {
+        get.cancel()
+        set.cancel()
+    }
+}
+
 extension RESTfulResource: Resettable {
     public func reset() {
         _wrappedValue = nil
         
-        lastGetTask = nil
-        lastGetTaskResult = nil
-        lastSetTask = nil
-        lastSetTaskResult = nil
-    }
-}
-
-extension RESTfulResource: Cancellable {
-    public func cancel() {
-        lastGetTask?.cancel()
-        lastSetTask?.cancel()
-    }
-}
-
-// MARK: - Auxiliary Implementation -
-
-extension RESTfulResource {
-    @usableFromInline
-    class EndpointDependency {
-        func isAvailable(in repository: Repository) -> Bool {
-            fatalError()
-        }
-    }
-    
-    public struct EndpointCoordinator<Endpoint: API.Endpoint> {
-        public let endpoint: (Repository) throws -> Endpoint
-        public let input: (Repository) throws -> Endpoint.Input
-        public let output: (Endpoint.Output) throws -> Value
-        
-        public init(
-            endpoint: @escaping (Repository) throws -> Endpoint,
-            input: @escaping (Repository) throws -> Endpoint.Input = { _ in throw Never.Reason.unimplemented },
-            output: @escaping (Endpoint.Output) throws -> Value = { _ in throw Never.Reason.unimplemented }
-        ) {
-            self.endpoint = endpoint
-            self.input = input
-            self.output = output
-        }
-        
-        public init(
-            endpoint: KeyPath<Root, Endpoint>,
-            input: @escaping (Repository) throws -> Endpoint.Input = { _ in throw Never.Reason.unimplemented },
-            output: @escaping (Endpoint.Output) throws -> Value = { _ in throw Never.Reason.unimplemented }
-        ) {
-            self.endpoint = { $0.interface[keyPath: endpoint] }
-            self.input = input
-            self.output = output
-        }
-        
-        public init() where Endpoint == NeverEndpoint<Repository.Interface> {
-            self.init(
-                endpoint: { _ in throw Never.Reason.irrational },
-                input: { _ in throw Never.Reason.irrational },
-                output: Never.materialize
-            )
-        }
+        get.reset()
+        set.reset()
     }
 }
 

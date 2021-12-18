@@ -25,8 +25,8 @@ public struct ResourceView<Resource, Placeholder: View, Success: View, Failure: 
 }
 
 extension ResourceView {
-    public init?<Repository>(
-        _ resource: AnyRepositoryResource<Repository, Resource>,
+    public init?(
+        _ resource: AnyResource<Resource>,
         success: @escaping (Resource) -> Success,
         failure: @escaping (Error) -> Failure,
         placeholder: @escaping () -> Placeholder

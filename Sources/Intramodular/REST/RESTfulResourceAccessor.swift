@@ -23,8 +23,8 @@ public final class RESTfulResourceAccessor<
     fileprivate let base: Resource
     fileprivate var repositorySubscription: AnyCancellable?
     
-    public var projectedValue: AnyRepositoryResource<Container, Value> {
-        .init(base, repository: repository)
+    public var projectedValue: AnyResource<Value> {
+        .init(base)
     }
     
     public var wrappedValue: Value? {
@@ -37,15 +37,12 @@ public final class RESTfulResourceAccessor<
     
     init(
         get: Resource.EndpointCoordinator<GetEndpoint>,
-        getDependencies: [Resource.EndpointDependency] = [],
-        set: Resource.EndpointCoordinator<SetEndpoint>,
-        setDependencies: [Resource.EndpointDependency] = []
+        set: Resource.EndpointCoordinator<SetEndpoint>
     ) {
         self.base = .init(
+            configuration: .init(),
             get: get,
-            dependenciesForGet: getDependencies,
-            set: set,
-            dependenciesForSet: setDependencies
+            set: set
         )
     }
     
@@ -71,8 +68,6 @@ public final class RESTfulResourceAccessor<
         _ object:  EnclosingSelf,
         storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, RESTfulResourceAccessor>
     ) where EnclosingSelf.Interface == Root {
-        let isFirstRun = repository == nil
-        
         guard let repository = object as? Container else {
             assertionFailure()
             
@@ -81,28 +76,6 @@ public final class RESTfulResourceAccessor<
         
         self.repository = repository
         self.base._repository = repository
-        
-        if isFirstRun {
-            if let repositoryObjectWillChange = repository.objectWillChange as? _opaque_VoidSender {
-                self.base.objectWillChange
-                    .receiveOnMainQueue()
-                    .publish(to: repositoryObjectWillChange)
-                    .subscribe(in: cancellables)
-            }
-            
-            self.base._lastRootID = repository.interface.id
-            
-            repositorySubscription = repository
-                .objectWillChange
-                .receive(on: DispatchQueue.main)
-                .sink { [unowned self, unowned repository] _ in                    
-                    if self.base.needsGetCall {
-                        self.base.fetch()
-                    }
-                    
-                    self.base._lastRootID = repository.interface.id
-                }
-        }
     }
 }
 
@@ -116,6 +89,7 @@ extension RESTfulResourceAccessor {
     ) where GetEndpoint.Input: Initiable, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { _ in .init() },
                 output: { $0[keyPath: getValueKeyPath] }
@@ -130,6 +104,7 @@ extension RESTfulResourceAccessor {
     ) where GetEndpoint.Input: ExpressibleByNilLiteral, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { _ in .init(nilLiteral: ()) },
                 output: { $0 }
@@ -144,6 +119,7 @@ extension RESTfulResourceAccessor {
     ) where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { _ in .init() },
                 output: { $0 }
@@ -158,6 +134,7 @@ extension RESTfulResourceAccessor {
     ) where GetEndpoint.Input == Void, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { _ in () },
                 output: { $0 }
@@ -167,7 +144,7 @@ extension RESTfulResourceAccessor {
     }
     
     // MARK: - Dependent Output
-
+    
     public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
@@ -175,6 +152,7 @@ extension RESTfulResourceAccessor {
     ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { _ in getInput },
                 output: { $0 }
@@ -190,6 +168,7 @@ extension RESTfulResourceAccessor {
     ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { try getInput($0) },
                 output: { $0 }
@@ -205,6 +184,7 @@ extension RESTfulResourceAccessor {
     ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { $0[keyPath: input] },
                 output: { $0 }
@@ -220,6 +200,7 @@ extension RESTfulResourceAccessor {
     ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { try $0[keyPath: input].unwrap() },
                 output: { $0 }
@@ -228,6 +209,25 @@ extension RESTfulResourceAccessor {
         )
     }
     
+    // MARK: - Transform
+    
+    /// e.g. `@Resource(get: \.foo, { $0.bar }) var bar: Bar?`
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        _ transform: @escaping (GetEndpoint.Output) throws -> Value
+    ) where GetEndpoint.Input == Void, SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                dependencyGraph: { _ in [] },
+                endpoint: get,
+                input: { _ in () },
+                output: { try transform($0) }
+            ),
+            set: .init()
+        )
+    }
+
     // MARK: - Dependent Output + Transform
     
     /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
@@ -239,6 +239,7 @@ extension RESTfulResourceAccessor {
     ) where SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { try $0[keyPath: input].unwrap() },
                 output: { $0[keyPath: transform] }
@@ -256,6 +257,7 @@ extension RESTfulResourceAccessor {
     ) where SetEndpoint == NeverEndpoint<Root> {
         self.init(
             get: .init(
+                dependencyGraph: { _ in [] },
                 endpoint: get,
                 input: { try $0[keyPath: input].unwrap() },
                 output: { try $0[keyPath: transform].unwrap() }

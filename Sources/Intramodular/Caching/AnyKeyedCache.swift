@@ -85,6 +85,16 @@ extension AnyKeyedCache: KeyedCodingCache where Key == AnyCodingKey, Value == An
     }
 }
 
+// MARK: - API -
+
+extension KeyedCodingCache {
+    public func code<Key: Hashable & StringConvertible, Value: Codable>(
+        _ type: Value.Type
+    ) -> AnyKeyedCache<Key, Value> {
+        .init(self, type: type)
+    }
+}
+
 // MARK: - Auxiliary Implementation -
 
 fileprivate protocol _opaque_AnyCodingCacheBox  {

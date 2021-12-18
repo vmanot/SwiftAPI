@@ -176,7 +176,8 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> 
         let previousSize = sizeForFileAtPath(path)
         
         do {
-            let data = try NSKeyedArchiver.archivedData(withRootObject: data, requiringSecureCoding: false)
+            let data = try coder.encode(data)
+            
             try data.write(to: URL(fileURLWithPath: path), options: .atomicWrite)
             
             _ = updateDiskAccessDateAtPath(path)

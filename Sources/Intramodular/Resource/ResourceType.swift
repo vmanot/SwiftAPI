@@ -14,6 +14,7 @@ public protocol ResourceType: _opaque_ResourceType, ObservableObject {
     associatedtype Value
     associatedtype ValueStreamPublisher: Publisher where ValueStreamPublisher.Output == Result<Value, Error>, ValueStreamPublisher.Failure == Never
     
+    var configuration: ResourceConfiguration<Value> { get set }
     var publisher: ValueStreamPublisher { get }
     var latestValue: Value? { get }
     
@@ -21,10 +22,4 @@ public protocol ResourceType: _opaque_ResourceType, ObservableObject {
     
     @discardableResult
     func fetch() -> AnyTask<Value, Error>
-}
-
-public protocol RepositoryResourceType: ResourceType {
-    associatedtype Repository: API.Repository
-    
-    var repository: Repository { get }
 }
