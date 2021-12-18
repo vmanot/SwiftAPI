@@ -159,7 +159,9 @@ extension RESTfulResource {
         
         cache
             .decache(Value.self, forKey: key)
+            .subscribe(on: DispatchQueue.global(qos: .userInitiated))
             .toResultPublisher()
+            .receiveOnMainQueue()
             .sink {
                 if self._wrappedValue == nil {
                     self._wrappedValue = try? $0.get()
@@ -179,7 +181,8 @@ extension RESTfulResource {
         
         cache
             .cache(value, forKey: key)
-            .subscribe(in: cancellables)
+            .subscribe(on: DispatchQueue.global(qos: .userInitiated))
+            .subscribe(in: self.cancellables)
     }
     
     private func validateDependencyResolution() throws {
