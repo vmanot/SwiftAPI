@@ -9,16 +9,22 @@ import Swallow
 ///
 /// An instance of `AnyResource` forwards its operations to an underlying base resource having the same `Value` type, hiding the specifics of the underlying resource.
 public class AnyResource<Value>: ResourceType {
+    public typealias ValueStreamPublisher = AnyPublisher<Result<Value, Error>, Never>
+    
     public let base: _opaque_ResourceType
     public let objectWillChange: AnyObjectWillChangePublisher
-    public let publisher: AnyPublisher<Result<Value, Error>, Never>
     
+    let publisherImpl: () -> ValueStreamPublisher
     let latestValueImpl: () -> Value?
     let unwrapImpl: () throws -> Value?
     let fetchImpl: () -> AnyTask<Value, Error>
     
     @Inout
     public var configuration: ResourceConfiguration<Value>
+    
+    public var publisher: ValueStreamPublisher {
+        publisherImpl()
+    }
     
     public var latestValue: Value? {
         latestValueImpl()
@@ -29,8 +35,9 @@ public class AnyResource<Value>: ResourceType {
     ) where Resource.Value == Value {
         self.base = resource
         self.objectWillChange = .init(from: resource)
-        self.publisher = resource.publisher.eraseToAnyPublisher()
         
+        self.publisherImpl = { resource.publisher.eraseToAnyPublisher() }
+    
         self._configuration = .init(getter: { resource.configuration }, setter: { resource.configuration = $0 })
         self.latestValueImpl = { resource.latestValue }
         self.unwrapImpl = resource.unwrap

@@ -98,6 +98,8 @@ public final class RESTfulResource<
         self.configuration = configuration
         self.get = get
         self.set = set
+        
+        _ = publisher
     }
     
     public func unwrap() throws -> Value? {
@@ -147,7 +149,7 @@ extension RESTfulResource {
             return false
         }
         
-        return _wrappedValue == nil
+        return get.lastResult == nil
     }
 
     private func decacheValueIfNecessary()  {
