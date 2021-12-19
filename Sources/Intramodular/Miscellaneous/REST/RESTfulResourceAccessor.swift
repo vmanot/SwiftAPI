@@ -36,11 +36,16 @@ public final class RESTfulResourceAccessor<
     }
     
     init(
+        persistentIdentifier: AnyCodingKey?,
         get: Resource.EndpointCoordinator<GetEndpoint>,
         set: Resource.EndpointCoordinator<SetEndpoint>
     ) {
+        var configuration = ResourceConfiguration<Value>()
+        
+        configuration.persistentIdentifier = persistentIdentifier
+        
         self.base = .init(
-            configuration: .init(),
+            configuration: configuration,
             get: get,
             set: set
         )
@@ -84,10 +89,12 @@ public final class RESTfulResourceAccessor<
 extension RESTfulResourceAccessor {
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         _ getValueKeyPath: KeyPath<GetEndpoint.Output, Value>
     ) where GetEndpoint.Input: Initiable, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -100,9 +107,11 @@ extension RESTfulResourceAccessor {
     
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>
     ) where GetEndpoint.Input: ExpressibleByNilLiteral, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -115,9 +124,11 @@ extension RESTfulResourceAccessor {
     
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>
     ) where GetEndpoint.Input: Initiable, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -130,9 +141,11 @@ extension RESTfulResourceAccessor {
     
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>
     ) where GetEndpoint.Input == Void, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -147,10 +160,12 @@ extension RESTfulResourceAccessor {
     
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         from getInput: GetEndpoint.Input
     ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -163,10 +178,12 @@ extension RESTfulResourceAccessor {
     
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         from getInput: @escaping (Container) throws -> GetEndpoint.Input
     ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -179,10 +196,12 @@ extension RESTfulResourceAccessor {
     
     public convenience init<WrappedInput>(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         from getInput: @escaping (Container) throws -> WrappedInput
     ) where GetEndpoint.Input == Optional<WrappedInput>, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -195,10 +214,12 @@ extension RESTfulResourceAccessor {
     
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         from input: KeyPath<Container, GetEndpoint.Input>
     ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -211,10 +232,12 @@ extension RESTfulResourceAccessor {
     
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         from input: KeyPath<Container, GetEndpoint.Input?>
     ) where GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -230,10 +253,12 @@ extension RESTfulResourceAccessor {
     /// e.g. `@Resource(get: \.foo, { $0.bar }) var bar: Bar?`
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         _ transform: @escaping (GetEndpoint.Output) throws -> Value
     ) where GetEndpoint.Input == Void, SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -249,11 +274,13 @@ extension RESTfulResourceAccessor {
     /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         _ transform: KeyPath<GetEndpoint.Output, Value>,
         from input: KeyPath<Container, GetEndpoint.Input>
     ) where SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -267,11 +294,13 @@ extension RESTfulResourceAccessor {
     /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         _ transform: KeyPath<GetEndpoint.Output, Value>,
         from input: KeyPath<Container, GetEndpoint.Input?>
     ) where SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -285,11 +314,13 @@ extension RESTfulResourceAccessor {
     /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         _ transform: KeyPath<GetEndpoint.Output, Value?>,
         from input: KeyPath<Container, GetEndpoint.Input>
     ) where SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
@@ -303,11 +334,13 @@ extension RESTfulResourceAccessor {
     /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
     public convenience init(
         wrappedValue: Value? = nil,
+        _ persistentIdentifier: AnyCodingKey? = nil,
         get: KeyPath<Root, GetEndpoint>,
         _ transform: KeyPath<GetEndpoint.Output, Value?>,
         from input: KeyPath<Container, GetEndpoint.Input?>
     ) where SetEndpoint == NeverEndpoint<Root> {
         self.init(
+            persistentIdentifier: persistentIdentifier,
             get: .init(
                 dependencyGraph: { _ in [] },
                 endpoint: get,
