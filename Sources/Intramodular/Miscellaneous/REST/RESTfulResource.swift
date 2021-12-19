@@ -181,7 +181,7 @@ extension RESTfulResource {
         
         cache
             .cache(value, forKey: key)
-            .subscribe(on: DispatchQueue.global(qos: .userInitiated))
+            .subscribe(on: DispatchQueue.global(qos: .utility))
             .subscribe(in: self.cancellables)
     }
     

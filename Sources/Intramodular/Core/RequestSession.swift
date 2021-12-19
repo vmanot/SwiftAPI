@@ -13,24 +13,6 @@ public protocol RequestSession: CancellablesHolder, Identifiable {
     func task(with _: Request) -> RequestTask
 }
 
-// MARK: - Implementation -
-
-private var cancellables_objcAssociationKey: Void = ()
-
-extension RequestSession where Self: AnyObject {
-    public var cancellables: Cancellables {
-        if let result = objc_getAssociatedObject(self, &cancellables_objcAssociationKey) as? Cancellables {
-            return result
-        } else {
-            let result = Cancellables()
-            
-            objc_setAssociatedObject(self, &cancellables_objcAssociationKey, result, .OBJC_ASSOCIATION_RETAIN)
-            
-            return result
-        }
-    }
-}
-
 // MARK: - Conformances -
 
 public final class AnyRequestSession<R: Request>: Identifiable, ObservableObject, RequestSession {

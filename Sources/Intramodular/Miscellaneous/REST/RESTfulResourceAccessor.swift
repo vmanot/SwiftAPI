@@ -177,6 +177,22 @@ extension RESTfulResourceAccessor {
         )
     }
     
+    public convenience init<WrappedInput>(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        from getInput: @escaping (Container) throws -> WrappedInput
+    ) where GetEndpoint.Input == Optional<WrappedInput>, GetEndpoint.Output == Value, SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                dependencyGraph: { _ in [] },
+                endpoint: get,
+                input: { try getInput($0) },
+                output: { $0 }
+            ),
+            set: .init()
+        )
+    }
+    
     public convenience init(
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
@@ -235,6 +251,24 @@ extension RESTfulResourceAccessor {
         wrappedValue: Value? = nil,
         get: KeyPath<Root, GetEndpoint>,
         _ transform: KeyPath<GetEndpoint.Output, Value>,
+        from input: KeyPath<Container, GetEndpoint.Input>
+    ) where SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                dependencyGraph: { _ in [] },
+                endpoint: get,
+                input: { $0[keyPath: input] },
+                output: { $0[keyPath: transform] }
+            ),
+            set: .init()
+        )
+    }
+    
+    /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        _ transform: KeyPath<GetEndpoint.Output, Value>,
         from input: KeyPath<Container, GetEndpoint.Input?>
     ) where SetEndpoint == NeverEndpoint<Root> {
         self.init(
@@ -247,7 +281,25 @@ extension RESTfulResourceAccessor {
             set: .init()
         )
     }
-    
+
+    /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
+    public convenience init(
+        wrappedValue: Value? = nil,
+        get: KeyPath<Root, GetEndpoint>,
+        _ transform: KeyPath<GetEndpoint.Output, Value?>,
+        from input: KeyPath<Container, GetEndpoint.Input>
+    ) where SetEndpoint == NeverEndpoint<Root> {
+        self.init(
+            get: .init(
+                dependencyGraph: { _ in [] },
+                endpoint: get,
+                input: { $0[keyPath: input] },
+                output: { try $0[keyPath: transform].unwrap() }
+            ),
+            set: .init()
+        )
+    }
+
     /// e.g. `@Resource(get: \.foo, \GetFooOutput.bar, from: baz) var bar: Bar?`
     public convenience init(
         wrappedValue: Value? = nil,

@@ -15,7 +15,7 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
     }
     
     private let implementation: Implementation
-    private let codingCacheImplementation: _opaque_AnyCodingCacheBox?
+    private let codingCacheImplementation: _opaque_AnyCodingKeyedCache?
     
     public init<Cache: KeyedCache>(_ cache: Cache) where Cache.Key == Key, Cache.Value == Value {
         self.implementation = Implementation(
@@ -30,16 +30,31 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
     
     public init<Cache: KeyedCodingCache>(
         _ cache: Cache,
-        type: Value.Type
+        valueType: Value.Type
     ) where Key: StringConvertible, Value: Codable {
         self.implementation = Implementation(
             cacheValue: { cache.cache($0, forKey: .init(stringValue: $1.stringValue)) },
-            decacheValueForKey: { cache.decache(type, forKey: .init(stringValue: $0.stringValue)) },
-            decacheInMemoryValueForKey: { try cache.decacheInMemoryValue(type, forKey: .init(stringValue: $0.stringValue)) },
+            decacheValueForKey: { cache.decache(valueType, forKey: .init(stringValue: $0.stringValue)) },
+            decacheInMemoryValueForKey: { try cache.decacheInMemoryValue(valueType, forKey: .init(stringValue: $0.stringValue)) },
             removeCachedValueForKey: { cache.removeCachedValue(forKey: .init(stringValue: $0.stringValue)) },
             removeAllCachedValues: { cache.removeAllCachedValues() }
         )
-        self.codingCacheImplementation = _AnyCodingCacheBox(base: cache)
+        self.codingCacheImplementation = _AnyCodingKeyedCache(base: cache, keyPrefix: nil)
+    }
+    
+    public init<Cache: KeyedCodingCache>(
+        _ cache: Cache,
+        keyPrefix: String,
+        valueType: Value.Type
+    ) where Key == AnyCodingKey, Value: Codable {
+        self.implementation = Implementation(
+            cacheValue: { cache.cache($0, forKey: .init(stringValue: keyPrefix + $1.stringValue)) },
+            decacheValueForKey: { cache.decache(valueType, forKey: .init(stringValue: keyPrefix + $0.stringValue)) },
+            decacheInMemoryValueForKey: { try cache.decacheInMemoryValue(valueType, forKey: .init(stringValue: keyPrefix + $0.stringValue)) },
+            removeCachedValueForKey: { cache.removeCachedValue(forKey: .init(stringValue: keyPrefix + $0.stringValue)) },
+            removeAllCachedValues: { .failure(Never.Reason.unavailable) } // FIXME!!!
+        )
+        self.codingCacheImplementation = _AnyCodingKeyedCache(base: cache, keyPrefix: keyPrefix)
     }
     
     public func cache(_ value: Value, forKey key: Key) -> AnySingleOutputPublisher<Void, Error> {
@@ -88,33 +103,38 @@ extension AnyKeyedCache: KeyedCodingCache where Key == AnyCodingKey, Value == An
 // MARK: - API -
 
 extension KeyedCodingCache {
+    public func withKeyPrefix(_ prefix: String) -> AnyKeyedCache<AnyCodingKey, AnyCodable> {
+        .init(self, keyPrefix: prefix, valueType: AnyCodable.self)
+    }
+    
     public func code<Key: Hashable & StringConvertible, Value: Codable>(
         _ type: Value.Type
     ) -> AnyKeyedCache<Key, Value> {
-        .init(self, type: type)
+        .init(self, valueType: type)
     }
 }
 
 // MARK: - Auxiliary Implementation -
 
-fileprivate protocol _opaque_AnyCodingCacheBox  {
+fileprivate protocol _opaque_AnyCodingKeyedCache  {
     func cache<T: Encodable>(_ value: T, forKey key: AnyCodingKey) -> AnySingleOutputPublisher<Void, Error>
     func decache<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) -> AnySingleOutputPublisher<T?, Error>
     func decacheInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) throws -> T?
 }
 
-fileprivate struct _AnyCodingCacheBox<Cache: KeyedCodingCache>: _opaque_AnyCodingCacheBox {
+fileprivate struct _AnyCodingKeyedCache<Cache: KeyedCodingCache>: _opaque_AnyCodingKeyedCache {
     let base: Cache
+    let keyPrefix: String?
     
     func cache<T: Encodable>(_ value: T, forKey key: AnyCodingKey) -> AnySingleOutputPublisher<Void, Error> {
-        base.cache(value, forKey: key)
+        base.cache(value, forKey: AnyCodingKey(stringValue: (keyPrefix ?? String()) + key.stringValue))
     }
     
     func decache<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) -> AnySingleOutputPublisher<T?, Error> {
-        base.decache(type, forKey: key)
+        base.decache(type, forKey: AnyCodingKey(stringValue: (keyPrefix ?? String()) + key.stringValue))
     }
     
     func decacheInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) throws -> T? {
-        try base.decacheInMemoryValue(type, forKey: key)
+        try base.decacheInMemoryValue(type, forKey: AnyCodingKey(stringValue: (keyPrefix ?? String()) + key.stringValue))
     }
 }
