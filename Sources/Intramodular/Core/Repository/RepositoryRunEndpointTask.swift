@@ -49,7 +49,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                 )
                 
                 if let response = try? cache.decacheInMemoryValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: repository.interface, input: input, options: options, request: request)) {
-                    task.send(.success(output))
+                    task.send(status: .success(output))
                     
                     return .empty()
                 }
@@ -77,9 +77,9 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                                         )
                                     )
                                     
-                                    task?.send(.success(output))
+                                    task?.send(status: .success(output))
                                 } catch {
-                                    task?.send(.error(.runtime(error)))
+                                    task?.send(status: .error(.runtime(error)))
                                     
                                     repository.logger?.error(
                                         error,
@@ -88,14 +88,14 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                                 }
                             }
                             case .failure(let error): do {
-                                task?.send(.error(.runtime(error)))
+                                task?.send(status: .error(.runtime(error)))
                                 
                                 repository.logger?.error(error, metadata: ["request": request])
                             }
                         }
                     })
             } catch {
-                task.send(.error(.runtime(error)))
+                task.send(status: .error(.runtime(error)))
                 
                 repository.logger?.notice("Failed to construct an API request.")
                 repository.logger?.error(error)
