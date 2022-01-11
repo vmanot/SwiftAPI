@@ -27,6 +27,18 @@ public struct RunEndpointFunction<Endpoint: API.Endpoint>  {
     ) async throws -> Output {
         try await callAsFunction(input, options: options).result.get()
     }
+    
+    public func callAsFunction(
+        options: Options
+    ) -> AnyTask<Output, Error> where Input == Void {
+        run((), options)
+    }
+    
+    public func callAsFunction(
+        options: Options
+    ) async throws -> Output where Input == Void {
+        try await callAsFunction(options: options).result.get()
+    }
 
     public func callAsFunction(
         _ input: Input

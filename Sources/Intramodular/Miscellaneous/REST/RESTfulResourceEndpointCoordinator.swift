@@ -61,7 +61,7 @@ final class RESTfulResourceEndpointCoordinator<
             var endpointOptions = try endpoint.makeDefaultOptions()
             
             /// Handle paginating endpoints that support automatic pagination.
-            if let latestValue = self.lastResult?.successValue as? _opaque_PaginatedListType {
+            if let latestValue = self.lastResult?.value as? _opaque_PaginatedListType {
                 if var _options = endpointOptions as? CursorPaginated {
                     _options.paginationCursor = latestValue.nextCursor
                     

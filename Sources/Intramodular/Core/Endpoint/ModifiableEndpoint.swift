@@ -6,11 +6,18 @@ import Swift
 
 /// An endpoint whose core functions can be modified.
 public protocol ModifiableEndpoint: Endpoint {
-    typealias BuildRequestTransformContext = TransformModifiableEndpointBuildRequestContext<Root, Input, Output, Options>
-    typealias DecodeOutputTransformContext = TransformModifiableEndpointDecodeOutputContext<Root, Input, Output, Options>
+    typealias BuildRequestTransformContext = TransformModifiableEndpointBuildRequestContext<
+        Root, Input, Output, Options
+    >
+    
+    typealias DecodeOutputTransformContext = TransformModifiableEndpointDecodeOutputContext<
+        Root, Input, Output, Options
+    >
 
     func addBuildRequestTransform(
-        _ transform: @escaping (Request, TransformModifiableEndpointBuildRequestContext<Root, Input, Output, Options>) throws -> Request
+        _ transform: @escaping (
+            Request, TransformModifiableEndpointBuildRequestContext<Root, Input, Output, Options>
+        ) throws -> Request
     )
 }
 
