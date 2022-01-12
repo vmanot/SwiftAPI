@@ -97,7 +97,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
             } catch {
                 task.send(status: .error(.runtime(error)))
                 
-                repository.logger?.notice("Failed to construct an API request.")
+                repository.logger?.debug("Failed to construct an API request.")
                 repository.logger?.error(error)
                 
                 return AnyCancellable.empty()
