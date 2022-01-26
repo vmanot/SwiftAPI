@@ -17,7 +17,7 @@ public final class RESTfulResource<
     SetEndpoint: Endpoint
 >: CancellablesHolder, ResourceType where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
     typealias EndpointCoordinator<E: Endpoint> = RESTfulResourceEndpointCoordinator<Repository, E, Value> where Repository.Interface == E.Root
-        
+    
     public var configuration: ResourceConfiguration<Value> {
         didSet {
             decacheValueIfNecessary()
@@ -151,7 +151,7 @@ extension RESTfulResource {
         
         return get.lastResult == nil
     }
-
+    
     private func decacheValueIfNecessary()  {
         guard configuration.cachePolicy.returnsCacheData, let cache = _repository?.resourceCache, let key = configuration.persistentIdentifier else {
             return
