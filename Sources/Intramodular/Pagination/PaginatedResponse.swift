@@ -6,6 +6,7 @@ import Compute
 import Swallow
 import Swift
 
+/// A paginated response.
 public protocol PaginatedResponse {
     associatedtype PaginatedListRepresentation: PaginatedListType & Partializable
     
