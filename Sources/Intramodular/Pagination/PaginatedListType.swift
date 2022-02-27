@@ -20,7 +20,7 @@ extension _opaque_PaginatedListType where Self: PaginatedListType {
     }
 }
 
-public protocol PaginatedListType: _opaque_PaginatedListType {
+public protocol PaginatedListType: _opaque_PaginatedListType, Sequence {
     var nextCursor: PaginationCursor? { get }
     
     mutating func setNextCursor(_ cursor: PaginationCursor?) throws

@@ -116,7 +116,7 @@ public struct NeverEndpoint<Root: ProgramInterface>: Endpoint {
         from input: Input,
         context: BuildRequestContext
     ) throws -> Request {
-        Never.materialize(reason: .impossible)
+
     }
     
     public func decodeOutput(
