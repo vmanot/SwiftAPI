@@ -20,6 +20,7 @@ extension _opaque_PaginatedListType where Self: PaginatedListType {
     }
 }
 
+/// A list of paginated items and associated pagination metadata.
 public protocol PaginatedListType: _opaque_PaginatedListType, Sequence {
     var nextCursor: PaginationCursor? { get }
     
