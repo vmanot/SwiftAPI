@@ -14,17 +14,7 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializ
         case _currentCursor
         case _nextCursor
     }
-    
-    public struct Partial {
-        public let items: [Item]?
-        public let nextCursor: PaginationCursor?
         
-        public init(items: [Item]?, nextCursor: PaginationCursor?) {
-            self.items = items
-            self.nextCursor = nextCursor
-        }
-    }
-    
     private var _cursorsConsumed: [PaginationCursor?] = []
     private var _tail: OrderedDictionary<PaginationCursor?, [Item]?> = [:]
     private var _head: [Item]?
@@ -83,6 +73,8 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializ
         _nextCursor = other._nextCursor
     }
 }
+
+// MARK: - Conformances -
 
 extension CursorPaginatedList: CustomStringConvertible {
     public var description: String {
@@ -144,4 +136,22 @@ extension CursorPaginatedList: Equatable where Item: Equatable {
 
 extension CursorPaginatedList: Hashable where Item: Hashable {
     
+}
+
+// MARK: - Auxiliary Implementation -
+
+extension CursorPaginatedList {
+    public struct Partial {
+        public let items: [Item]?
+        public let nextCursor: PaginationCursor?
+        
+        public init(items: [Item]?, nextCursor: PaginationCursor?) {
+            self.items = items
+            self.nextCursor = nextCursor
+        }
+        
+        public func map<T>(_ transform: (Item) throws -> T) rethrows -> CursorPaginatedList<T>.Partial {
+            .init(items: try items?.map({ try transform($0) }), nextCursor: nextCursor)
+        }
+    }
 }

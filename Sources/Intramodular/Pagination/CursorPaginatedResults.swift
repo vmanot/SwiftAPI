@@ -6,7 +6,7 @@ import Merge
 import Swallow
 
 /// An async iterator that generates a sequence of cursor-paginated list partials.
-public class AsyncCursorPaginatedResponseIterator<Item>: AsyncIteratorProtocol {
+public struct AsyncCursorPaginatedItemsIterator<Item>: AsyncIteratorProtocol {
     public typealias Element = CursorPaginatedList<Item>.Partial
     
     private let fetch: (PaginationCursor?) async throws -> CursorPaginatedList<Item>.Partial
@@ -22,7 +22,7 @@ public class AsyncCursorPaginatedResponseIterator<Item>: AsyncIteratorProtocol {
         self.fetch = fetch
     }
     
-    public func next() async throws -> CursorPaginatedList<Item>.Partial? {
+    public mutating func next() async throws -> CursorPaginatedList<Item>.Partial? {
         guard !hasReachedEnd else {
             return nil
         }
@@ -41,19 +41,21 @@ public class AsyncCursorPaginatedResponseIterator<Item>: AsyncIteratorProtocol {
 
 public class CursorPaginatedResults<Item>: ObservableObject, @unchecked Sendable, Sequence  {
     private let taskQueue = AsyncTaskQueue()
-    private let makeResponseIterator: () -> AsyncCursorPaginatedResponseIterator<Item>
+    private let makePaginatedIterator: () -> AsyncCursorPaginatedItemsIterator<Item>
+    
+    private lazy var currentIterator = self.makePaginatedIterator()
     
     @Published private var currentPaginatedList = CursorPaginatedList<Item>()
     
     public init(
-        _ iterator: @escaping () -> AsyncCursorPaginatedResponseIterator<Item>
+        _ iterator: @escaping () -> AsyncCursorPaginatedItemsIterator<Item>
     ) {
-        self.makeResponseIterator = iterator
+        self.makePaginatedIterator = iterator
     }
     
     public func fetch() {
         taskQueue.queue {
-            if let partial = try await self.makeResponseIterator().next() {
+            if let partial = try await self.currentIterator.next() {
                 try self.currentPaginatedList.coalesceInPlace(with: partial)
             }
         }
