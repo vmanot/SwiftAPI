@@ -10,5 +10,5 @@ import Swift
 public protocol PaginatedResponse {
     associatedtype PaginatedListRepresentation: PaginatedListType & Partializable
     
-    func convert() throws -> Partial<PaginatedListRepresentation>
+    func convert() throws -> PartialOf<PaginatedListRepresentation>
 }
