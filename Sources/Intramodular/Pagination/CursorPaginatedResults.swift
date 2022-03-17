@@ -54,7 +54,7 @@ public class CursorPaginatedResults<Item>: ObservableObject, @unchecked Sendable
     }
     
     public func fetch() {
-        taskQueue.queue {
+        taskQueue.add {
             if let partial = try await self.currentIterator.next() {
                 try self.currentPaginatedList.coalesceInPlace(with: partial)
             }
