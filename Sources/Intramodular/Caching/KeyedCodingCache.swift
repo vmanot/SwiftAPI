@@ -14,6 +14,26 @@ public protocol KeyedCodingCache: KeyedCache where Key == AnyCodingKey, Value ==
 // MARK: - API -
 
 extension KeyedCodingCache {
+    public func cache<T: Encodable>(
+        _ value: T,
+        forKey key: AnyCodingKey
+    ) async throws {
+        try await cache(value, forKey: key).output()
+    }
+
+    public func decache<T: Decodable>(
+        _ type: T.Type,
+        forKey key: AnyCodingKey
+    ) async throws -> T? {
+        if let inMemoryValue = try? decacheInMemoryValue(type, forKey: key) {
+            return inMemoryValue
+        }
+
+        return try await decache(type, forKey: key).output()
+    }
+}
+
+extension KeyedCodingCache {
     public func cache<T>(_ value: T, forKey key: AnyCodingKey) -> AnySingleOutputPublisher<Void, Error> {
         do {
             return try cast(value, to: Encodable.self)._cache(into: self, forKey: key)
