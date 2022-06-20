@@ -301,7 +301,7 @@ extension DiskCache: KeyedCache {
     }
     
     public func removeAllCachedValues() async throws {
-        try await withUnsafeThrowingContinuation { continuation in
+        try await withUnsafeThrowingContinuation { (continuation: UnsafeContinuation<Void, Error>) in
             self.queue.async {
                 do {
                     try self.itemsInDirectory(self.location).forEach { filePath in

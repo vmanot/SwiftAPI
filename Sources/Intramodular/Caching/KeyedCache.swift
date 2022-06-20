@@ -51,6 +51,9 @@ extension KeyedCache {
 
 // MARK: - Conformances -
 
+/// A keyed-cache where every option is a no-op.
+///
+/// Value retrieval functions will yield a `nil`.
 public final class EmptyKeyedCache<Key: Hashable, Value>: Initiable & KeyedCache {
     public init() {
         
