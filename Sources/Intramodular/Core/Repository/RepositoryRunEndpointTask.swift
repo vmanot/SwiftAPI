@@ -28,7 +28,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
     var progress: Progress {
         base.progress
     }
-        
+    
     init(
         repository: Repository,
         endpoint: Endpoint,

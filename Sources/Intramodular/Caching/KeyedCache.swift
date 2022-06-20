@@ -5,6 +5,7 @@
 import Merge
 import Swallow
 
+/// A keyed cache suitable for caching and retrieving values.
 public protocol KeyedCache {
     associatedtype Key: Hashable
     associatedtype Value
@@ -68,7 +69,7 @@ public final class EmptyKeyedCache<Key: Hashable, Value>: Initiable & KeyedCache
     }
     
     public func removeAllCachedValues() async throws {
-
+        
     }
 }
 
