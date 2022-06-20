@@ -48,7 +48,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                     context: .init(root: repository.interface, options: options)
                 )
                 
-                if let response = try? cache.decacheInMemoryValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: repository.interface, input: input, options: options, request: request)) {
+                if let response = try? cache.retrieveInMemoryValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: repository.interface, input: input, options: options, request: request)) {
                     task.send(status: .success(output))
                     
                     return .empty()

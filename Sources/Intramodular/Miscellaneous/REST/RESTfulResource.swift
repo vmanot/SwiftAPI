@@ -157,17 +157,18 @@ extension RESTfulResource {
             return
         }
         
-        cache
-            .decache(Value.self, forKey: key)
-            .subscribe(on: DispatchQueue.global(qos: .userInitiated))
-            .toResultPublisher()
-            .receiveOnMainQueue()
-            .sink {
-                if self._wrappedValue == nil {
-                    self._wrappedValue = try? $0.get()
-                }
+        Task(priority: .userInitiated) { @MainActor in
+            try await cache.decache(Value.self, forKey: key)
+        }
+        .publisher(priority: .userInitiated)
+        .toResultPublisher()
+        .receiveOnMainQueue()
+        .sink {
+            if self._wrappedValue == nil {
+                self._wrappedValue = try? $0.get()
             }
-            .store(in: cancellables)
+        }
+        .store(in: cancellables)
     }
     
     private func cacheValueIfNecessary() {
@@ -179,10 +180,11 @@ extension RESTfulResource {
             return
         }
         
-        cache
-            .cache(value, forKey: key)
-            .subscribe(on: DispatchQueue.global(qos: .utility))
-            .subscribe(in: self.cancellables)
+        Task { @MainActor in
+            try await cache.cache(value, forKey: key)
+        }
+        .publisher(priority: .utility)
+        .subscribe(in: self.cancellables)
     }
     
     private func validateDependencyResolution() throws {

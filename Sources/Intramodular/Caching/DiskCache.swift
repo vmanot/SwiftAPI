@@ -63,49 +63,48 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> 
         }
     }
     
-    private func cache<T: Encodable>(_ value: T, forKey key: String) -> AnySingleOutputPublisher<Void, Error>  {
-        return Just((value, key))
+    private func cache<T: Encodable>(_ value: T, forKey key: String) async throws {
+        try await Just((value, key))
             .setFailureType(to: Error.self)
             .subscribe(on: queue)
             .flatMap { [weak self] payload -> AnySingleOutputPublisher<Void, Error> in
                 return self!.setDataSync(payload.0, key: payload.1)
             }
-            .eraseToAnySingleOutputPublisher()
+            .output()
     }
     
-    private func decache<T: Decodable>(
+    private func retrieveValue<T: Decodable>(
         _ type: T.Type,
         forKey key: String
-    ) -> AnySingleOutputPublisher<T?, Error> {
-        Deferred {
-            Future<T?, Error> { [weak self] attemptToFulfill in
-                do {
-                    let `self` = try self.unwrap()
-                    let url = self.urlForKey(key)
+    ) async throws -> T? {
+        try await Future<T?, Error> { [weak self] attemptToFulfill in
+            do {
+                let `self` = try self.unwrap()
+                let url = self.urlForKey(key)
+                
+                guard self.fileManager.fileExists(at: url) else {
+                    attemptToFulfill(.success(nil))
                     
-                    guard self.fileManager.fileExists(at: url) else {
-                        attemptToFulfill(.success(nil))
-                        
-                        return
-                    }
-                    
-                    let data = try Data(contentsOf: url)
-                    let value = try self.coder.decode(type, from: data)
-                    
-                    attemptToFulfill(.success(value))
-                    
-                    _ = self.updateDiskAccessDateAtPath(url.path)
-                } catch {
-                    attemptToFulfill(.failure(error))
+                    return
                 }
+                
+                let data = try Data(contentsOf: url)
+                let value = try self.coder.decode(type, from: data)
+                
+                attemptToFulfill(.success(value))
+                
+                _ = self.updateDiskAccessDateAtPath(url.path)
+            } catch {
+                attemptToFulfill(.failure(error))
             }
         }
         .subscribe(on: queue)
         .eraseToAnySingleOutputPublisher()
+        .output()
     }
     
-    private func removeCachedValue(forKey key: String) -> AnySingleOutputPublisher<Void, Error> {
-        Deferred {
+    private func removeCachedValue(forKey key: String) async throws {
+        try await Deferred {
             Future<Void, Error> { [weak self] attemptToFulfill in
                 do {
                     let `self` = try self.unwrap()
@@ -122,6 +121,7 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> 
         }
         .subscribe(on: queue)
         .eraseToAnySingleOutputPublisher()
+        .output()
     }
     
     private func removeDataForKey(_ key: String) {
@@ -284,26 +284,24 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> 
 
 @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
 extension DiskCache: KeyedCache {
-    public func cache(_ value: Value, forKey key: Key) -> AnySingleOutputPublisher<Void, Error> {
-        cache(EncodableImpl(value.encode(to:)), forKey: key.stringValue)
+    public func cache(_ value: Value, forKey key: Key) async throws {
+        try await cache(EncodableImpl(value.encode(to:)), forKey: key.stringValue)
     }
     
-    public func decache(forKey key: Key) -> AnySingleOutputPublisher<Value?, Error> {
-        decache(Value.self, forKey: key.stringValue)
+    public func retrieveValue(forKey key: Key) async throws -> Value? {
+        try await retrieveValue(Value.self, forKey: key.stringValue)
     }
     
-    public func decacheInMemoryValue(forKey key: Key) throws -> Value? {
+    public func retrieveInMemoryValue(forKey key: Key) throws -> Value? {
         nil
     }
     
-    @discardableResult
-    public func removeCachedValue(forKey key: Key) -> AnySingleOutputPublisher<Void, Error> {
-        removeCachedValue(forKey: key.stringValue)
+    public func removeCachedValue(forKey key: Key) async throws {
+        try await removeCachedValue(forKey: key.stringValue)
     }
     
-    @discardableResult
-    public func removeAllCachedValues() -> AnySingleOutputPublisher<Void, Error> {
-        Future { attemptToFulfill in
+    public func removeAllCachedValues() async throws {
+        try await withUnsafeThrowingContinuation { continuation in
             self.queue.async {
                 do {
                     try self.itemsInDirectory(self.location).forEach { filePath in
@@ -311,30 +309,29 @@ extension DiskCache: KeyedCache {
                     }
                     try self.calculateSize()
                     
-                    attemptToFulfill(.success(()))
+                    continuation.resume(with: .success(()))
                 } catch {
-                    attemptToFulfill(.failure(error))
+                    continuation.resume(with: .failure(error))
                 }
             }
         }
-        .eraseToAnySingleOutputPublisher()
     }
 }
 
 @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
 extension DiskCache: KeyedCodingCache where Key == AnyCodingKey, Value == AnyCodable {
-    public func cache<T: Encodable>(_ value: T, forKey key: Key) -> AnySingleOutputPublisher<Void, Error>  {
-        cache(value, forKey: key.stringValue)
+    public func cache<T: Encodable>(_ value: T, forKey key: Key) async throws  {
+        try await cache(value, forKey: key.stringValue)
     }
     
-    public func decache<T: Decodable>(
+    public func retrieveValue<T: Decodable>(
         _ type: T.Type,
         forKey key: Key
-    ) -> AnySingleOutputPublisher<T?, Error> {
-        decache(type, forKey: key.stringValue)
+    ) async throws -> T? {
+        try await retrieveValue(type, forKey: key.stringValue)
     }
     
-    public func decacheInMemoryValue<T: Decodable>(
+    public func retrieveInMemoryValue<T: Decodable>(
         _ type: T.Type,
         forKey key: Key
     ) throws -> T? {

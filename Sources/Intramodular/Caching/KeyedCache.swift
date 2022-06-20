@@ -14,13 +14,13 @@ public protocol KeyedCache {
     /// - parameter value: The value to store.
     /// - parameter key: The key that the value is associated with.
     /// - returns: A publisher that emits once the caching attempt has finished.
-    func cache(_ value: Value, forKey key: Key) -> AnySingleOutputPublisher<Void, Error>
+    func cache(_ value: Value, forKey key: Key) async throws
     
     /// Attempt to retrieve a value associated with the given key.
     ///
     /// - parameter key: The key the value is associated with.
     /// - returns: A publisher that emits the associated value if it exists, or an error if decaching failed.
-    func decache(forKey key: Key) -> AnySingleOutputPublisher<Value?, Error>
+    func retrieveValue(forKey key: Key) async throws -> Value?
     
     /// Attempt to retrieve an in-memory value associated with the given key.
     ///
@@ -30,22 +30,20 @@ public protocol KeyedCache {
     /// - returns: The value associated with the given key, if it exists in-memory.
     /// - throws: An error if the operation operation fails.
     /// - complexity: O(1)
-    func decacheInMemoryValue(forKey key: Key) throws -> Value?
+    func retrieveInMemoryValue(forKey key: Key) throws -> Value?
     
-    @discardableResult
-    func removeCachedValue(forKey key: Key) -> AnySingleOutputPublisher<Void, Error>
-    @discardableResult
-    func removeAllCachedValues() -> AnySingleOutputPublisher<Void, Error>
+    func removeCachedValue(forKey key: Key) async throws
+    func removeAllCachedValues() async throws
 }
 
 // MARK: - Implementation -
 
 extension KeyedCache {
-    public func decache(forKey key: Key) -> AnySingleOutputPublisher<Value?, Error> {
-        if let value = try? decacheInMemoryValue(forKey: key) {
-            return .just(value)
+    public func retrieveValue(forKey key: Key) async throws -> Value? {
+        if let value = try? retrieveInMemoryValue(forKey: key) {
+            return value
         } else {
-            return .failure(Never.Reason.unimplemented)
+            throw Never.Reason.unimplemented
         }
     }
 }
@@ -57,33 +55,33 @@ public final class EmptyKeyedCache<Key: Hashable, Value>: Initiable & KeyedCache
         
     }
     
-    public func cache(_ value: Value, forKey key: Key) -> AnySingleOutputPublisher<Void, Error> {
-        .just(())
+    public func cache(_ value: Value, forKey key: Key) async throws {
+        
     }
     
-    public func decacheInMemoryValue(forKey key: Key) throws -> Value? {
+    public func retrieveInMemoryValue(forKey key: Key) throws -> Value? {
         nil
     }
     
-    public func removeCachedValue(forKey key: Key) -> AnySingleOutputPublisher<Void, Error> {
-        .just(())
+    public func removeCachedValue(forKey key: Key) async throws {
+        
     }
     
-    public func removeAllCachedValues() -> AnySingleOutputPublisher<Void, Error> {
-        .just(())
+    public func removeAllCachedValues() async throws {
+
     }
 }
 
 extension EmptyKeyedCache: KeyedCodingCache where Key == AnyCodingKey, Value == AnyCodable {
-    public func cache<T: Encodable>(_ value: T, forKey key: Key) -> AnySingleOutputPublisher<Void, Error>  {
-        .just(())
+    public func cache<T: Encodable>(_ value: T, forKey key: Key) async throws  {
+        
     }
     
-    public func decache<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) -> AnySingleOutputPublisher<T?, Error> {
-        .just(nil)
+    public func retrieveValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) async throws -> T? {
+        nil
     }
     
-    public func decacheInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: Key) throws -> T?  {
+    public func retrieveInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: Key) throws -> T?  {
         nil
     }
 }
