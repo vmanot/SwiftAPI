@@ -44,7 +44,6 @@ public final class RESTfulResource<
             if oldValue == nil, let repository = _repository {
                 if let repositoryObjectWillChange = repository.objectWillChange as? _opaque_VoidSender {
                     objectWillChange
-                        .receiveOnMainQueue()
                         .publish(to: repositoryObjectWillChange)
                         .subscribe(in: cancellables)
                 }
@@ -112,7 +111,7 @@ public final class RESTfulResource<
         
         getTask
             .successPublisher
-            .receiveOnMainQueue()
+            .receiveOnMainThread()
             .sinkResult(in: cancellables) { result in
                 if let value = result.leftValue {
                     self._wrappedValue = value
@@ -162,7 +161,7 @@ extension RESTfulResource {
         }
         .publisher(priority: .userInitiated)
         .toResultPublisher()
-        .receiveOnMainQueue()
+        .receiveOnMainThread()
         .sink {
             if self._wrappedValue == nil {
                 self._wrappedValue = try? $0.get()
