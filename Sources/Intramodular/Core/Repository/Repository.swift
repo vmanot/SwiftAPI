@@ -16,7 +16,7 @@ public protocol Repository: ObservableObject {
     associatedtype Session: RequestSession where Session.Request == Interface.Request
     associatedtype SessionCache: KeyedCache = EmptyKeyedCache<Session.Request, Session.Request.Result> where SessionCache.Key == Session.Request, SessionCache.Value == Session.Request.Response
     associatedtype ResourceCache: KeyedCodingCache = EmptyKeyedCache<AnyCodingKey, AnyCodable>
-    associatedtype LoggerType: LoggerProtocol = Logging.Logger
+    associatedtype LoggerType: LoggerProtocol = PassthroughLogger
     
     typealias Schema = Interface.Schema
     
@@ -29,7 +29,7 @@ public protocol Repository: ObservableObject {
 
 // MARK: - Implementation -
 
-extension Repository where LoggerType == Logging.Logger {
+extension Repository where LoggerType == PassthroughLogger {
     public var logger: LoggerType? {
         nil
     }
