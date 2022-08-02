@@ -11,7 +11,7 @@ import Swallow
 ///
 /// The combination of a program interface and a compatible request session.
 @dynamicMemberLookup
-public protocol Repository: ObservableObject {
+public protocol Repository: Loggable, ObservableObject {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
     associatedtype SessionCache: KeyedCache = EmptyKeyedCache<Session.Request, Session.Request.Result> where SessionCache.Key == Session.Request, SessionCache.Value == Session.Request.Response
@@ -20,7 +20,6 @@ public protocol Repository: ObservableObject {
     
     typealias Schema = Interface.Schema
     
-    var logger: LoggerType? { get }
     var interface: Interface { get }
     var session: Session { get }
     var sessionCache: SessionCache { get }
@@ -28,12 +27,6 @@ public protocol Repository: ObservableObject {
 }
 
 // MARK: - Implementation -
-
-extension Repository where LoggerType == PassthroughLogger {
-    public var logger: LoggerType? {
-        nil
-    }
-}
 
 extension Repository where ResourceCache == EmptyKeyedCache<AnyCodingKey, AnyCodable> {
     public var resourceCache: ResourceCache {

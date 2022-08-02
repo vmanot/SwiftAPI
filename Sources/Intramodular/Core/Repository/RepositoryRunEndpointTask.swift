@@ -62,7 +62,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                         switch result {
                             case .success(let value): do {
                                 do {
-                                    repository.logger?.debug(
+                                    repository.logger.debug(
                                         "Received a request response",
                                         metadata: ["response": value]
                                     )
@@ -81,7 +81,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                                 } catch {
                                     task?.send(status: .error(.runtime(error)))
                                     
-                                    repository.logger?.error(
+                                    repository.logger.error(
                                         error,
                                         metadata: ["request": request]
                                     )
@@ -90,15 +90,15 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                             case .failure(let error): do {
                                 task?.send(status: .error(.runtime(error)))
                                 
-                                repository.logger?.error(error, metadata: ["request": request])
+                                repository.logger.error(error, metadata: ["request": request])
                             }
                         }
                     })
             } catch {
                 task.send(status: .error(.runtime(error)))
                 
-                repository.logger?.debug("Failed to construct an API request.")
-                repository.logger?.error(error)
+                repository.logger.debug("Failed to construct an API request.")
+                repository.logger.error(error)
                 
                 return AnyCancellable.empty()
             }
