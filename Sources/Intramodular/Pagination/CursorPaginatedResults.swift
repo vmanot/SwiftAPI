@@ -40,7 +40,7 @@ public struct AsyncCursorPaginatedItemsIterator<Item>: AsyncIteratorProtocol {
 }
 
 public class CursorPaginatedResults<Item>: ObservableObject, @unchecked Sendable, Sequence  {
-    private let taskQueue = AsyncTaskQueue()
+    private let taskQueue = TaskQueue()
     private let makePaginatedIterator: () -> AsyncCursorPaginatedItemsIterator<Item>
     
     private lazy var currentIterator = self.makePaginatedIterator()
