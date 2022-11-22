@@ -27,7 +27,7 @@ extension KeyedCodingCache {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension Decodable {
     static func _retrieveValue<Cache: KeyedCodingCache>(from cache: Cache, forKey key: AnyCodingKey) async throws -> Decodable? {

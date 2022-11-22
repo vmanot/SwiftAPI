@@ -164,7 +164,7 @@ extension PaginationCursor: Comparable {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 public enum FetchLimit: Codable, ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Hashable {
     case cursor(PaginationCursor)

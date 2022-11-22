@@ -26,7 +26,7 @@ extension ModifiableEndpoint {
     public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output, Options>
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 public struct TransformModifiableEndpointBuildRequestContext<Root: ProgramInterface, Input, Output, Options> {
     public let root: Root

@@ -106,7 +106,7 @@ extension KeyedCodingCache {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 fileprivate protocol _opaque_AnyCodingKeyedCache  {
     func cache<T: Encodable>(_ value: T, forKey key: AnyCodingKey) async throws

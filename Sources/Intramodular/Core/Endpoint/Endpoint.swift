@@ -72,7 +72,7 @@ extension Endpoint {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 public struct EndpointBuildRequestContext<Root: ProgramInterface, Input, Output, Options> {
     public let root: Root

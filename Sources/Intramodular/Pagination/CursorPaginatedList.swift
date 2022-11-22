@@ -138,7 +138,7 @@ extension CursorPaginatedList: Hashable where Item: Hashable {
     
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 extension CursorPaginatedList {
     public struct Partial {

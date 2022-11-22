@@ -339,7 +339,7 @@ extension DiskCache: KeyedCodingCache where Key == AnyCodingKey, Value == AnyCod
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 fileprivate extension String {
     var md5Hash: String {

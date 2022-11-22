@@ -217,7 +217,7 @@ extension RESTfulResource: Resettable {
     }
 }
 
-// MARK: - Auxiliary Implementation -
+// MARK: - Auxiliary -
 
 enum RESTfulResourceError: CustomDebugStringConvertible, Error {
     case repositoryResolutionFailed
