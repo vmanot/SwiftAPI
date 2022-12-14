@@ -208,7 +208,7 @@ extension RESTfulResource: Cancellable {
     }
 }
 
-extension RESTfulResource: Resettable {
+extension RESTfulResource {
     public func reset() {
         _wrappedValue = nil
         

@@ -9,7 +9,7 @@ final class RESTfulResourceEndpointCoordinator<
     Repository: API.Repository,
     Endpoint: API.Endpoint,
     Value
->: Cancellable, Resettable where Repository.Interface == Endpoint.Root {
+>: Cancellable where Repository.Interface == Endpoint.Root {
     @usableFromInline
     class EndpointDependency {
         func isAvailable(in repository: Repository) -> Bool {
