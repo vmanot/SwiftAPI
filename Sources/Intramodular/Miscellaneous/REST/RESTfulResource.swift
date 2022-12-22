@@ -12,11 +12,11 @@ import Swallow
 /// This type is responsible for getting/setting resource values.
 public final class RESTfulResource<
     Value,
-    Repository: API.Repository,
+    Client: API.Client,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
->: CancellablesHolder, ResourceType where GetEndpoint.Root == Repository.Interface, SetEndpoint.Root == Repository.Interface {
-    typealias EndpointCoordinator<E: Endpoint> = RESTfulResourceEndpointCoordinator<Repository, E, Value> where Repository.Interface == E.Root
+>: CancellablesHolder, ResourceType where GetEndpoint.Root == Client.Interface, SetEndpoint.Root == Client.Interface {
+    typealias EndpointCoordinator<E: Endpoint> = RESTfulResourceEndpointCoordinator<Client, E, Value> where Client.Interface == E.Root
     
     public var configuration: ResourceConfiguration<Value> {
         didSet {
@@ -27,7 +27,7 @@ public final class RESTfulResource<
     private let get: EndpointCoordinator<GetEndpoint>
     private let set: EndpointCoordinator<SetEndpoint>
     
-    private var _lastRootID: Repository.Interface.ID?
+    private var _lastRootID: Client.Interface.ID?
     
     @Published private var _wrappedValue: Value? {
         didSet {
@@ -36,29 +36,29 @@ public final class RESTfulResource<
     }
     
     @usableFromInline
-    weak var _repository: Repository? {
+    weak var _client: Client? {
         didSet {
-            get.parent = _repository
-            set.parent = _repository
+            get.parent = _client
+            set.parent = _client
             
-            if oldValue == nil, let repository = _repository {
-                if let repositoryObjectWillChange = repository.objectWillChange as? _opaque_VoidSender {
+            if oldValue == nil, let client = _client {
+                if let clientObjectWillChange = client.objectWillChange as? _opaque_VoidSender {
                     objectWillChange
-                        .publish(to: repositoryObjectWillChange)
+                        .publish(to: clientObjectWillChange)
                         .subscribe(in: cancellables)
                 }
                 
-                _lastRootID = repository.interface.id
+                _lastRootID = client.interface.id
                 
-                repository
+                client
                     .objectWillChange
                     .receive(on: DispatchQueue.main)
-                    .sink { [unowned self, unowned repository] _ in
+                    .sink { [unowned self, unowned client] _ in
                         if needsGetCall {
                             self.fetch()
                         }
                         
-                        self._lastRootID = repository.interface.id
+                        self._lastRootID = client.interface.id
                     }
                     .store(in: cancellables)
             }
@@ -128,11 +128,11 @@ public final class RESTfulResource<
 
 extension RESTfulResource {
     var needsGetCall: Bool {
-        guard let repository = _repository else {
+        guard let client = _client else {
             return false
         }
         
-        guard repository.interface.id == _lastRootID else {
+        guard client.interface.id == _lastRootID else {
             return true
         }
         
@@ -152,7 +152,7 @@ extension RESTfulResource {
     }
     
     private func decacheValueIfNecessary()  {
-        guard configuration.cachePolicy.returnsCacheData, let cache = _repository?.resourceCache, let key = configuration.persistentIdentifier else {
+        guard configuration.cachePolicy.returnsCacheData, let cache = _client?._resourceCache, let key = configuration.persistentIdentifier else {
             return
         }
         
@@ -171,7 +171,7 @@ extension RESTfulResource {
     }
     
     private func cacheValueIfNecessary() {
-        guard configuration.cachePolicy.returnsCacheData, let cache = _repository?.resourceCache, let key = configuration.persistentIdentifier else {
+        guard configuration.cachePolicy.returnsCacheData, let cache = _client?._resourceCache, let key = configuration.persistentIdentifier else {
             return
         }
         
@@ -187,12 +187,12 @@ extension RESTfulResource {
     }
     
     private func validateDependencyResolution() throws {
-        guard let repository = _repository else {
-            throw RESTfulResourceError.repositoryResolutionFailed
+        guard let client = _client else {
+            throw RESTfulResourceError.clientResolutionFailed
         }
         
-        for dependency in try get.dependencyGraph(repository) {
-            guard dependency.isAvailable(in: repository) else {
+        for dependency in try get.dependencyGraph(client) {
+            guard dependency.isAvailable(in: client) else {
                 throw RESTfulResourceError.dependencyResolutionFailed
             }
         }
@@ -220,13 +220,13 @@ extension RESTfulResource {
 // MARK: - Auxiliary -
 
 enum RESTfulResourceError: CustomDebugStringConvertible, Error {
-    case repositoryResolutionFailed
+    case clientResolutionFailed
     case dependencyResolutionFailed
     
     var debugDescription: String {
         switch self {
-            case .repositoryResolutionFailed:
-                return "Repository resolution failed."
+            case .clientResolutionFailed:
+                return "Client resolution failed."
             case .dependencyResolutionFailed:
                 return "Dependency resolution failed."
         }

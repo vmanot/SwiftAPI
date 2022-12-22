@@ -6,22 +6,22 @@ import Foundation
 import Merge
 import Swallow
 
-final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.Endpoint>: ObservableTask where Endpoint.Root == Repository.Interface {
+final class _ClientEndpointTask<Client: API.Client, Endpoint: API.Endpoint>: ObservableTask where Endpoint.Root == Client.Interface {
     typealias Success = Endpoint.Output
-    typealias Error = Repository.Interface.Error
+    typealias Error = Client.Interface.Error
     
-    let repository: Repository
+    let client: Client
     let endpoint: Endpoint
     let input: Endpoint.Input
     let options: Endpoint.Options
     
-    private let base: AnyTask<Endpoint.Output, Repository.Interface.Error>
+    private let base: AnyTask<Endpoint.Output, Client.Interface.Error>
     
-    var objectWillChange: AnyTask<Endpoint.Output, Repository.Interface.Error>.ObjectWillChangePublisher {
+    var objectWillChange: AnyTask<Endpoint.Output, Client.Interface.Error>.ObjectWillChangePublisher {
         base.objectWillChange
     }
     
-    var status: TaskStatus<Endpoint.Output, Repository.Interface.Error> {
+    var status: TaskStatus<Endpoint.Output, Client.Interface.Error> {
         base.status
     }
     
@@ -30,13 +30,13 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
     }
     
     init(
-        repository: Repository,
+        client: Client,
         endpoint: Endpoint,
         input: Endpoint.Input,
         options: Endpoint.Options,
         cache: AnyKeyedCache<Endpoint.Request, Endpoint.Request.Response>
     ) {
-        self.repository = repository
+        self.client = client
         self.endpoint = endpoint
         self.input = input
         self.options = options
@@ -45,16 +45,16 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
             do {
                 let request = try endpoint.buildRequest(
                     from: input,
-                    context: .init(root: repository.interface, options: options)
+                    context: .init(root: client.interface, options: options)
                 )
                 
-                if let response = try? cache.retrieveInMemoryValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: repository.interface, input: input, options: options, request: request)) {
+                if let response = try? cache.retrieveInMemoryValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: client.interface, input: input, options: options, request: request)) {
                     task.send(status: .success(output))
                     
                     return .empty()
                 }
                 
-                return repository
+                return client
                     .session
                     .task(with: request)
                     .successPublisher
@@ -62,7 +62,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                         switch result {
                             case .success(let value): do {
                                 do {
-                                    repository.logger.debug(
+                                    client.logger.debug(
                                         "Received a request response",
                                         metadata: ["response": value]
                                     )
@@ -70,7 +70,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                                     let output = try endpoint.decodeOutput(
                                         from: value,
                                         context: .init(
-                                            root: repository.interface,
+                                            root: client.interface,
                                             input: input,
                                             options: options,
                                             request: request
@@ -81,7 +81,7 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                                 } catch {
                                     task?.send(status: .error(.runtime(error)))
                                     
-                                    repository.logger.error(
+                                    client.logger.error(
                                         error,
                                         metadata: ["request": request]
                                     )
@@ -90,15 +90,15 @@ final class RepositoryRunEndpointTask<Repository: API.Repository, Endpoint: API.
                             case .failure(let error): do {
                                 task?.send(status: .error(.runtime(error)))
                                 
-                                repository.logger.error(error, metadata: ["request": request])
+                                client.logger.error(error, metadata: ["request": request])
                             }
                         }
                     })
             } catch {
                 task.send(status: .error(.runtime(error)))
                 
-                repository.logger.debug("Failed to construct an API request.")
-                repository.logger.error(error)
+                client.logger.debug("Failed to construct an API request.")
+                client.logger.error(error)
                 
                 return AnyCancellable.empty()
             }

@@ -10,18 +10,18 @@ import Swallow
 @propertyWrapper
 public final class RESTfulResourceAccessor<
     Value,
-    Container: Repository,
+    Container: Client,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
 >: ResourceAccessor where GetEndpoint.Root == Container.Interface, SetEndpoint.Root == Container.Interface {
     public typealias Resource = RESTfulResource<Value, Container, GetEndpoint, SetEndpoint>
     public typealias Root = Container.Interface
     
-    fileprivate weak var repository: Container?
+    fileprivate weak var client: Container?
     
     fileprivate let cancellables = Cancellables()
     fileprivate let base: Resource
-    fileprivate var repositorySubscription: AnyCancellable?
+    fileprivate var clientSubscription: AnyCancellable?
     
     public var projectedValue: AnyResource<Value> {
         .init(base)
@@ -52,7 +52,7 @@ public final class RESTfulResourceAccessor<
     }
     
     @inlinable
-    public static subscript<EnclosingSelf: Repository>(
+    public static subscript<EnclosingSelf: Client>(
         _enclosingInstance object: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value?>,
         storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, RESTfulResourceAccessor>
@@ -69,18 +69,18 @@ public final class RESTfulResourceAccessor<
     }
     
     @usableFromInline
-    func receiveEnclosingInstance<EnclosingSelf: Repository>(
+    func receiveEnclosingInstance<EnclosingSelf: Client>(
         _ object:  EnclosingSelf,
         storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, RESTfulResourceAccessor>
     ) where EnclosingSelf.Interface == Root {
-        guard let repository = object as? Container else {
+        guard let client = object as? Container else {
             assertionFailure()
             
             return
         }
         
-        self.repository = repository
-        self.base._repository = repository
+        self.client = client
+        self.base._client = client
     }
 }
 
@@ -354,7 +354,7 @@ extension RESTfulResourceAccessor {
 
 // MARK: - API -
 
-extension Repository where Interface: RESTfulInterface {
+extension Client where Interface: RESTfulInterface {
     public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<
         Value,
         Self,

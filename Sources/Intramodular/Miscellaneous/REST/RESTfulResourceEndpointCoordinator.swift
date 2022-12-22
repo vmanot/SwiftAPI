@@ -6,33 +6,33 @@ import Merge
 import Swallow
 
 final class RESTfulResourceEndpointCoordinator<
-    Repository: API.Repository,
+    Client: API.Client,
     Endpoint: API.Endpoint,
     Value
->: Cancellable where Repository.Interface == Endpoint.Root {
+>: Cancellable where Client.Interface == Endpoint.Root {
     @usableFromInline
     class EndpointDependency {
-        func isAvailable(in repository: Repository) -> Bool {
+        func isAvailable(in client: Client) -> Bool {
             fatalError()
         }
     }
     
     private let cancellables = Cancellables()
     
-    weak var parent: Repository?
+    weak var parent: Client?
     
-    let dependencyGraph: (Repository) throws -> [EndpointDependency]
-    let endpoint: (Repository) throws -> Endpoint
-    let input: (Repository) throws -> Endpoint.Input
+    let dependencyGraph: (Client) throws -> [EndpointDependency]
+    let endpoint: (Client) throws -> Endpoint
+    let input: (Client) throws -> Endpoint.Input
     let output: (Endpoint.Output) throws -> Value
     
     @Published var endpointTask: AnyTask<Endpoint.Output, Endpoint.Root.Error>?
     @Published var lastResult: TaskResult<Value, Swift.Error>?
     
     init(
-        dependencyGraph: @escaping (Repository) throws -> [EndpointDependency],
-        endpoint: @escaping (Repository) throws -> Endpoint,
-        input: @escaping (Repository) throws -> Endpoint.Input,
+        dependencyGraph: @escaping (Client) throws -> [EndpointDependency],
+        endpoint: @escaping (Client) throws -> Endpoint,
+        input: @escaping (Client) throws -> Endpoint.Input,
         output: @escaping (Endpoint.Output) throws -> Value
     ) {
         self.dependencyGraph = dependencyGraph
@@ -55,9 +55,9 @@ final class RESTfulResourceEndpointCoordinator<
         do {
             endpointTask?.cancel()
             
-            let repository = try parent.unwrap()
+            let client = try parent.unwrap()
             
-            let endpoint = try self.endpoint(repository)
+            let endpoint = try self.endpoint(client)
             var endpointOptions = try endpoint.makeDefaultOptions()
             
             /// Handle paginating endpoints that support automatic pagination.
@@ -69,9 +69,9 @@ final class RESTfulResourceEndpointCoordinator<
                 }
             }
             
-            let endpointTask = repository.run(
+            let endpointTask = client.run(
                 endpoint,
-                with: try input(repository),
+                with: try input(client),
                 options: endpointOptions
             )
             
@@ -100,7 +100,7 @@ final class RESTfulResourceEndpointCoordinator<
     }
     
     private func handleEndpointOutput(
-        _ output: TaskResult<Endpoint.Output, Repository.Interface.Error>
+        _ output: TaskResult<Endpoint.Output, Client.Interface.Error>
     ) -> TaskResult<Value, Error> {
         var result: TaskResult<Value, Error>
         
@@ -128,9 +128,9 @@ final class RESTfulResourceEndpointCoordinator<
     // MARK: - Initializers
     
     init(
-        dependencyGraph: @escaping (Repository) throws -> [EndpointDependency],
+        dependencyGraph: @escaping (Client) throws -> [EndpointDependency],
         endpoint: KeyPath<Endpoint.Root, Endpoint>,
-        input: @escaping (Repository) throws -> Endpoint.Input = { _ in throw Never.Reason.unimplemented },
+        input: @escaping (Client) throws -> Endpoint.Input = { _ in throw Never.Reason.unimplemented },
         output: @escaping (Endpoint.Output) throws -> Value = { _ in throw Never.Reason.unimplemented }
     ) {
         self.dependencyGraph = dependencyGraph
@@ -139,7 +139,7 @@ final class RESTfulResourceEndpointCoordinator<
         self.output = output
     }
     
-    convenience init() where Endpoint == NeverEndpoint<Repository.Interface> {
+    convenience init() where Endpoint == NeverEndpoint<Client.Interface> {
         self.init(
             dependencyGraph: { _ in throw Never.Reason.irrational },
             endpoint: { _ in throw Never.Reason.irrational },
