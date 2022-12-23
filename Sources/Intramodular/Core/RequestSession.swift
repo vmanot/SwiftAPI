@@ -6,7 +6,7 @@ import Merge
 import ObjectiveC
 import Swift
 
-public protocol RequestSession<Request>: CancellablesHolder, Identifiable {
+public protocol RequestSession<Request>: CancellablesHolder {
     associatedtype Request: API.Request
     associatedtype RequestTask: ObservableTask where RequestTask.Success == Request.Response, RequestTask.Error == Request.Error
     
@@ -16,21 +16,18 @@ public protocol RequestSession<Request>: CancellablesHolder, Identifiable {
 // MARK: - Conformances -
 
 public final class AnyRequestSession<R: Request>: Identifiable, ObservableObject, RequestSession {
+    public let base: any RequestSession<R>
+    
     private let cancellablesImpl: () -> Cancellables
-    private let idImpl: () -> AnyHashable
     private let taskImpl: (R) -> AnyTask<R.Response, R.Error>
     
     public var cancellables: Cancellables {
         cancellablesImpl()
     }
-    
-    public var id: AnyHashable {
-        idImpl()
-    }
-    
+        
     public init<S: RequestSession>(_ session: S) where S.Request == R {
+        self.base = session
         self.cancellablesImpl = { session.cancellables }
-        self.idImpl = { session.id }
         self.taskImpl = { session.task(with: $0).eraseToAnyTask() }
     }
     
