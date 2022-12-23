@@ -20,9 +20,9 @@ extension DefaultProgramInterfaceError: LocalizedError {
     public var errorDescription: String? {
         switch self {
             case .badRequest(let error):
-                return error.localizedDescription
+                return (error as? LocalizedError)?.localizedDescription ?? error.localizedDescription
             case .runtime(let error):
-                return String(describing: error)
+                return (error as? LocalizedError)?.localizedDescription ?? error.localizedDescription
         }
     }
 }
