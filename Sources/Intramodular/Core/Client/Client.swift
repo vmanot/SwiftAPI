@@ -20,9 +20,7 @@ public protocol Client: Loggable, ObservableObject {
     associatedtype SessionCache: KeyedCache = EmptyKeyedCache<Session.Request, Session.Request.Result> where SessionCache.Key == Session.Request, SessionCache.Value == Session.Request.Response
     associatedtype _ResourceCache: KeyedCodingCache = EmptyKeyedCache<AnyCodingKey, AnyCodable>
     associatedtype LoggerType: LoggerProtocol = PassthroughLogger
-    
-    typealias Schema = Interface.Schema
-    
+        
     var interface: Interface { get }
     var session: Session { get }
     var sessionCache: SessionCache { get }
@@ -90,5 +88,12 @@ extension Client {
         options: E.Options
     ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface {
         run(interface[keyPath: endpoint], with: input, options: options)
+    }
+    
+    public func run<E: Endpoint>(
+        _ endpoint: KeyPath<Interface, E>,
+        with input: E.Input
+    ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface, E.Options == Void {
+        run(interface[keyPath: endpoint], with: input, options: ())
     }
 }

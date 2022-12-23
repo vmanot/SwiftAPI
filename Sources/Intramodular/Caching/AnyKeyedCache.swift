@@ -33,11 +33,21 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
         valueType: Value.Type
     ) where Key: StringConvertible, Value: Codable {
         self.implementation = Implementation(
-            cacheValue: { try await cache.cache($0, forKey: .init(stringValue: $1.stringValue)) },
-            retrieveValueForKey: { try await cache.retrieveValue(valueType, forKey: .init(stringValue: $0.stringValue)) },
-            retrieveInMemoryValueForKey: { try cache.retrieveInMemoryValue(valueType, forKey: .init(stringValue: $0.stringValue)) },
-            removeCachedValueForKey: { try await cache.removeCachedValue(forKey: .init(stringValue: $0.stringValue)) },
-            removeAllCachedValues: { try await cache.removeAllCachedValues() }
+            cacheValue: {
+                try await cache.cache($0, forKey: .init(stringValue: $1.stringValue))
+            },
+            retrieveValueForKey: {
+                try await cache.retrieveValue(valueType, forKey: .init(stringValue: $0.stringValue))
+            },
+            retrieveInMemoryValueForKey: {
+                try cache.retrieveInMemoryValue(valueType, forKey: .init(stringValue: $0.stringValue))
+            },
+            removeCachedValueForKey: {
+                try await cache.removeCachedValue(forKey: .init(stringValue: $0.stringValue))
+            },
+            removeAllCachedValues: {
+                try await cache.removeAllCachedValues()
+            }
         )
         self.codingCacheImplementation = _AnyCodingKeyedCache(base: cache, keyPrefix: nil)
     }
@@ -48,11 +58,21 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
         valueType: Value.Type
     ) where Key == AnyCodingKey, Value: Codable {
         self.implementation = Implementation(
-            cacheValue: { try await cache.cache($0, forKey: .init(stringValue: keyPrefix + $1.stringValue)) },
-            retrieveValueForKey: { try await cache.retrieveValue(valueType, forKey: .init(stringValue: keyPrefix + $0.stringValue)) },
-            retrieveInMemoryValueForKey: { try cache.retrieveInMemoryValue(valueType, forKey: .init(stringValue: keyPrefix + $0.stringValue)) },
-            removeCachedValueForKey: { try await cache.removeCachedValue(forKey: .init(stringValue: keyPrefix + $0.stringValue)) },
-            removeAllCachedValues: { throw Never.Reason.unavailable } // FIXME!!!
+            cacheValue: {
+                try await cache.cache($0, forKey: .init(stringValue: keyPrefix + $1.stringValue))
+            },
+            retrieveValueForKey: {
+                try await cache.retrieveValue(valueType, forKey: .init(stringValue: keyPrefix + $0.stringValue))
+            },
+            retrieveInMemoryValueForKey: {
+                try cache.retrieveInMemoryValue(valueType, forKey: .init(stringValue: keyPrefix + $0.stringValue))
+            },
+            removeCachedValueForKey: {
+                try await cache.removeCachedValue(forKey: .init(stringValue: keyPrefix + $0.stringValue))
+            },
+            removeAllCachedValues: {
+                TODO.unimplemented
+            }
         )
         self.codingCacheImplementation = _AnyCodingKeyedCache(base: cache, keyPrefix: keyPrefix)
     }
@@ -119,14 +139,18 @@ fileprivate struct _AnyCodingKeyedCache<Cache: KeyedCodingCache>: _opaque_AnyCod
     let keyPrefix: String?
     
     func cache<T: Encodable>(_ value: T, forKey key: AnyCodingKey) async throws {
-        try await base.cache(value, forKey: AnyCodingKey(stringValue: (keyPrefix ?? String()) + key.stringValue))
+        try await base.cache(value, forKey: _toPrefixedKey(key))
     }
     
     func retrieveValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) async throws -> T? {
-        try await base.retrieveValue(type, forKey: AnyCodingKey(stringValue: (keyPrefix ?? String()) + key.stringValue))
+        try await base.retrieveValue(type, forKey: _toPrefixedKey(key))
     }
     
     func retrieveInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) throws -> T? {
-        try base.retrieveInMemoryValue(type, forKey: AnyCodingKey(stringValue: (keyPrefix ?? String()) + key.stringValue))
+        try base.retrieveInMemoryValue(type, forKey: _toPrefixedKey(key))
+    }
+    
+    private func _toPrefixedKey(_ key: AnyCodingKey) -> AnyCodingKey {
+        AnyCodingKey(stringValue: (keyPrefix ?? String()) + key.stringValue)
     }
 }

@@ -15,3 +15,14 @@ public enum DefaultProgramInterfaceError<Interface: ProgramInterface>: ProgramIn
     case badRequest(Interface.Request.Error)
     case runtime(Error)
 }
+
+extension DefaultProgramInterfaceError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+            case .badRequest(let error):
+                return error.localizedDescription
+            case .runtime(let error):
+                return String(describing: error)
+        }
+    }
+}
