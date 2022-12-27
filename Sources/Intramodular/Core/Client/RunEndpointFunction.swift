@@ -25,7 +25,7 @@ public struct _ClientRunEndpointFunction<Endpoint: API.Endpoint>  {
         _ input: Input,
         options: Options
     ) async throws -> Output {
-        try await callAsFunction(input, options: options).result.get()
+        try await callAsFunction(input, options: options).value
     }
     
     public func callAsFunction(
@@ -37,7 +37,7 @@ public struct _ClientRunEndpointFunction<Endpoint: API.Endpoint>  {
     public func callAsFunction(
         options: Options
     ) async throws -> Output where Input == Void {
-        try await callAsFunction(options: options).result.get()
+        try await callAsFunction(options: options).value
     }
 
     public func callAsFunction(
@@ -49,7 +49,7 @@ public struct _ClientRunEndpointFunction<Endpoint: API.Endpoint>  {
     public func callAsFunction(
         _ input: Input
     ) async throws -> Output where Options == Void {
-        try await callAsFunction(input).result.get()
+        try await callAsFunction(input).value
     }
     
     public func callAsFunction() -> AnyTask<Output, Error> where Input: ExpressibleByNilLiteral, Options == Void {
@@ -57,7 +57,7 @@ public struct _ClientRunEndpointFunction<Endpoint: API.Endpoint>  {
     }
 
     public func callAsFunction() async throws -> Output where Input: ExpressibleByNilLiteral, Options == Void {
-        try await callAsFunction().result.get()
+        try await callAsFunction().value
     }
     
     public func callAsFunction() -> AnyTask<Output, Error> where Input: ExpressibleByNilLiteral, Options: ExpressibleByNilLiteral {
@@ -65,7 +65,7 @@ public struct _ClientRunEndpointFunction<Endpoint: API.Endpoint>  {
     }
 
     public func callAsFunction() async throws -> Output where Input: ExpressibleByNilLiteral, Options: ExpressibleByNilLiteral {
-        try await callAsFunction().result.get()
+        try await callAsFunction().value
     }
 
     public func callAsFunction() -> AnyTask<Output, Error> where Input == Void, Options == Void {
@@ -73,7 +73,7 @@ public struct _ClientRunEndpointFunction<Endpoint: API.Endpoint>  {
     }
 
     public func callAsFunction() async throws -> Output where Input == Void, Options == Void {
-        try await callAsFunction().result.get()
+        try await callAsFunction().value
     }
     
     public func callAsFunction() -> AnyTask<Output, Error> where Input == Void, Options: ExpressibleByNilLiteral {
@@ -81,6 +81,6 @@ public struct _ClientRunEndpointFunction<Endpoint: API.Endpoint>  {
     }
 
     public func callAsFunction() async throws -> Output where Input == Void, Options: ExpressibleByNilLiteral {
-        try await callAsFunction().result.get()
+        try await callAsFunction().value
     }
 }

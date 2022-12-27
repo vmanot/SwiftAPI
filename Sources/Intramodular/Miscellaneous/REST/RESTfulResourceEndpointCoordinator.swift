@@ -82,7 +82,9 @@ final class RESTfulResourceEndpointCoordinator<
             let resultTask = PassthroughTask<Value, Error>()
             
             endpointTask
-                .resultPublisher
+                .outputPublisher
+                .toResultPublisher()
+                .compactMap({ TaskResult(from: $0) })
                 .sink(in: cancellables) { [weak self] result in
                     guard let self = self else {
                         return

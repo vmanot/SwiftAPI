@@ -92,8 +92,23 @@ extension Client {
     
     public func run<E: Endpoint>(
         _ endpoint: KeyPath<Interface, E>,
+        with input: E.Input,
+        options: E.Options
+    ) async throws -> E.Output where E.Root == Interface, E.Options == Void {
+        try await run(endpoint, with: input, options: options).value
+    }
+
+    public func run<E: Endpoint>(
+        _ endpoint: KeyPath<Interface, E>,
         with input: E.Input
     ) -> AnyTask<E.Output, Interface.Error> where E.Root == Interface, E.Options == Void {
         run(interface[keyPath: endpoint], with: input, options: ())
+    }
+    
+    public func run<E: Endpoint>(
+        _ endpoint: KeyPath<Interface, E>,
+        with input: E.Input
+    ) async throws -> E.Output where E.Root == Interface, E.Options == Void {
+        try await run(endpoint, with: input).value
     }
 }
