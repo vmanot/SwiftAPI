@@ -33,11 +33,11 @@ public enum PaginationCursor: Hashable {
 
 extension PaginationCursor {
     public var offsetValue: Int? {
-        guard case let .offset(offset) = self else {
+        guard case let .offset(value) = self else {
             return nil
         }
         
-        return offset
+        return value
     }
     
     public func getOffsetValue() throws -> Int {
@@ -45,19 +45,19 @@ extension PaginationCursor {
     }
     
     public var stringValue: String? {
-        guard case let .string(string) = self else {
+        guard case let .string(value) = self else {
             return nil
         }
         
-        return string
+        return value
     }
     
     public var urlValue: URL? {
-        guard case let .url(url) = self else {
+        guard case let .url(value) = self else {
             return nil
         }
         
-        return url
+        return value
     }
 }
 
@@ -166,13 +166,25 @@ extension PaginationCursor: Comparable {
 
 // MARK: - Auxiliary -
 
-public enum FetchLimit: Codable, ExpressibleByIntegerLiteral, ExpressibleByNilLiteral, Hashable {
+public enum FetchLimit: Codable, ExpressibleByNilLiteral, Hashable {
     case cursor(PaginationCursor)
     case max(Int)
     case none
     
-    public init(integerLiteral value: Int) {
-        self = .cursor(.offset(value))
+    public var cursorValue: PaginationCursor? {
+        guard case let .cursor(value) = self else {
+            return nil
+        }
+        
+        return value
+    }
+
+    public var maxValue: Int? {
+        guard case let .max(value) = self else {
+            return nil
+        }
+        
+        return value
     }
     
     public init(nilLiteral: Void) {
