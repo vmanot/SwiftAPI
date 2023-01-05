@@ -14,7 +14,7 @@ public typealias Repository = Client
 ///
 /// The combination of a program interface and a compatible request session.
 @dynamicMemberLookup
-public protocol Client: Loggable, ObservableObject {
+public protocol Client: Logging, ObservableObject {
     associatedtype Interface: ProgramInterface
     associatedtype Session: RequestSession where Session.Request == Interface.Request
     associatedtype SessionCache: KeyedCache = EmptyKeyedCache<Session.Request, Session.Request.Result> where SessionCache.Key == Session.Request, SessionCache.Value == Session.Request.Response
