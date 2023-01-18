@@ -194,11 +194,17 @@ public enum FetchLimit: Codable, ExpressibleByNilLiteral, Hashable {
     public func encode(to encoder: Encoder) throws {
         switch self {
             case .cursor(let cursor):
-                try encoder.encodeSingleValue(cursor)
+                var container = encoder.singleValueContainer()
+                
+                try container.encode(cursor)
             case .max(let value):
-                try encoder.encodeSingleValue(value)
+                var container = encoder.singleValueContainer()
+
+                try container.encode(value)
             case .none:
-                try encoder.encodeSingleNil()
+                var container = encoder.singleValueContainer()
+                
+                try container.encodeNil()
         }
     }
     
