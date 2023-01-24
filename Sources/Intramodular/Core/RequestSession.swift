@@ -24,7 +24,7 @@ public final class AnyRequestSession<R: Request>: Identifiable, ObservableObject
     public var cancellables: Cancellables {
         cancellablesImpl()
     }
-        
+    
     public init<S: RequestSession>(_ session: S) where S.Request == R {
         self.base = session
         self.cancellablesImpl = { session.cancellables }
