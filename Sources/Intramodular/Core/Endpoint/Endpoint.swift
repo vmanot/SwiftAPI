@@ -6,7 +6,7 @@ import Combine
 import Swallow
 
 /// An type that represents an API's endpoint.
-public protocol Endpoint: AnyProtocol {
+public protocol Endpoint {
     /// The API this endpoint is associated to.
     associatedtype Root: ProgramInterface
     /// The endpoint's input type.

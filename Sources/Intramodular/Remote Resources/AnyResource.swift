@@ -11,7 +11,7 @@ import Swallow
 public class AnyResource<Value>: ResourceType {
     public typealias ValueStreamPublisher = AnyPublisher<Result<Value, Error>, Never>
     
-    public let base: _opaque_ResourceType
+    public let base: any ResourceType
     public let objectWillChange: AnyObjectWillChangePublisher
     
     let publisherImpl: () -> ValueStreamPublisher
