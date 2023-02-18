@@ -8,7 +8,7 @@ import Swallow
 /// A keyed cache suitable for caching and retrieving values.
 public protocol KeyedCache {
     associatedtype Key: Hashable
-    associatedtype Value
+    associatedtype Value: Sendable
     
     /// Store a value for the given key.
     ///
@@ -37,7 +37,7 @@ public protocol KeyedCache {
     func removeAllCachedValues() async throws
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension KeyedCache {
     public func retrieveValue(forKey key: Key) async throws -> Value? {
@@ -49,7 +49,7 @@ extension KeyedCache {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 /// A keyed-cache where every option is a no-op.
 ///

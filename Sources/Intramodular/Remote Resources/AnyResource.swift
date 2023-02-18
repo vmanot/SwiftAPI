@@ -54,7 +54,7 @@ public class AnyResource<Value>: ResourceType {
     }
 }
 
-// MARK: - API -
+// MARK: - API
 
 extension Result {
     public init?(

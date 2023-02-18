@@ -31,7 +31,7 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
     public init<Cache: KeyedCodingCache>(
         _ cache: Cache,
         valueType: Value.Type
-    ) where Key: StringConvertible, Value: Codable {
+    ) where Key: StringConvertible, Value: Codable & Sendable {
         self.implementation = Implementation(
             cacheValue: {
                 try await cache.cache($0, forKey: .init(stringValue: $1.stringValue))
@@ -56,7 +56,7 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
         _ cache: Cache,
         keyPrefix: String,
         valueType: Value.Type
-    ) where Key == AnyCodingKey, Value: Codable {
+    ) where Key == AnyCodingKey, Value: Codable & Sendable {
         self.implementation = Implementation(
             cacheValue: {
                 try await cache.cache($0, forKey: .init(stringValue: keyPrefix + $1.stringValue))
@@ -112,7 +112,7 @@ extension AnyKeyedCache: KeyedCodingCache where Key == AnyCodingKey, Value == An
     }
 }
 
-// MARK: - API -
+// MARK: - API
 
 extension KeyedCodingCache {
     public func withKeyPrefix(_ prefix: String) -> AnyKeyedCache<AnyCodingKey, AnyCodable> {
@@ -126,7 +126,7 @@ extension KeyedCodingCache {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 fileprivate protocol _opaque_AnyCodingKeyedCache  {
     func cache<T: Encodable>(_ value: T, forKey key: AnyCodingKey) async throws
@@ -138,15 +138,24 @@ fileprivate struct _AnyCodingKeyedCache<Cache: KeyedCodingCache>: _opaque_AnyCod
     let base: Cache
     let keyPrefix: String?
     
-    func cache<T: Encodable>(_ value: T, forKey key: AnyCodingKey) async throws {
+    func cache<T: Encodable & Sendable>(
+        _ value: T,
+        forKey key: AnyCodingKey
+    ) async throws {
         try await base.cache(value, forKey: _toPrefixedKey(key))
     }
     
-    func retrieveValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) async throws -> T? {
+    func retrieveValue<T: Decodable & Sendable>(
+        _ type: T.Type,
+        forKey key: AnyCodingKey
+    ) async throws -> T? {
         try await base.retrieveValue(type, forKey: _toPrefixedKey(key))
     }
     
-    func retrieveInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) throws -> T? {
+    func retrieveInMemoryValue<T: Decodable>(
+        _ type: T.Type,
+        forKey key: AnyCodingKey
+    ) throws -> T? {
         try base.retrieveInMemoryValue(type, forKey: _toPrefixedKey(key))
     }
     

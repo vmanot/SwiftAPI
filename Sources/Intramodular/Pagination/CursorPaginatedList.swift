@@ -74,7 +74,7 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializ
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension CursorPaginatedList: CustomStringConvertible {
     public var description: String {
@@ -138,7 +138,7 @@ extension CursorPaginatedList: Hashable where Item: Hashable {
     
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 extension CursorPaginatedList {
     public struct Partial {

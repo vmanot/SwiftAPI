@@ -12,7 +12,7 @@ public protocol CursorPaginated {
     var fetchLimit: FetchLimit? { get }
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension CursorPaginated {
     public var fetchLimit: FetchLimit? {

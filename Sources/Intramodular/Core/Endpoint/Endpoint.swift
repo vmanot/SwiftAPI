@@ -40,7 +40,7 @@ public protocol Endpoint {
     ) throws -> Output
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension Endpoint {
     public func makeDefaultOptions() throws -> Options {
@@ -56,7 +56,7 @@ extension Endpoint {
     }
 }
 
-// MARK: - API -
+// MARK: - API
 
 extension Endpoint {
     public func input(_ type: Input.Type) -> Self {
@@ -72,7 +72,7 @@ extension Endpoint {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 public struct EndpointBuildRequestContext<Root: ProgramInterface, Input, Output, Options> {
     public let root: Root

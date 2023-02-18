@@ -13,7 +13,7 @@ public protocol RequestSession<Request>: CancellablesHolder {
     func task(with _: Request) -> RequestTask
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 public final class AnyRequestSession<R: Request>: Identifiable, ObservableObject, RequestSession {
     public let base: any RequestSession<R>

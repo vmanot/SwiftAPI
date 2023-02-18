@@ -20,7 +20,7 @@ public protocol ProgramInterface: Identifiable {
     associatedtype Schema = Never
 }
 
-// MARK: - Helpers -
+// MARK: - Helpers
 
 public struct EmptyProgramInterface<Root: ProgramInterface, Request: API.Request, Error: ProgramInterfaceError> {
     public init() {

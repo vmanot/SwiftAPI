@@ -61,7 +61,7 @@ extension PaginationCursor {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension PaginationCursor: Codable {
     public enum CodingKeys: CodingKey {
@@ -164,7 +164,7 @@ extension PaginationCursor: Comparable {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 public enum FetchLimit: Codable, ExpressibleByNilLiteral, Hashable {
     case cursor(PaginationCursor)

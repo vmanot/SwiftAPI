@@ -11,7 +11,7 @@ import Swallow
 ///
 /// This type is responsible for getting/setting resource values.
 public final class RESTfulResource<
-    Value,
+    Value: Sendable,
     Client: API.Client,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
@@ -199,7 +199,7 @@ extension RESTfulResource {
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 extension RESTfulResource: Cancellable {
     public func cancel() {
@@ -217,7 +217,7 @@ extension RESTfulResource {
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 enum RESTfulResourceError: CustomDebugStringConvertible, Error {
     case clientResolutionFailed

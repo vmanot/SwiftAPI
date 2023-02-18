@@ -84,7 +84,7 @@ public final class RESTfulResourceAccessor<
     }
 }
 
-// MARK: - Initializers -
+// MARK: - Initializers
 
 extension RESTfulResourceAccessor {
     public convenience init(
@@ -352,7 +352,7 @@ extension RESTfulResourceAccessor {
     }
 }
 
-// MARK: - API -
+// MARK: - API
 
 extension Client where Interface: RESTfulInterface {
     public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<

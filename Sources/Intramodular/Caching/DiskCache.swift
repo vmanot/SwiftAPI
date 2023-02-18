@@ -13,13 +13,14 @@ import Swallow
 ///
 /// Based on https://github.com/spring-media/Carlos.
 @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
-public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> {
+public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable & Sendable>: @unchecked Sendable {
     public enum CacheError: Error {
         case writeFailed(Error)
     }
     
     private let logger = os.Logger(subsystem: "com.vmanot.API", category: "DiskCache")
-    private let queue = DispatchQueue(label: DiskCache.self)
+    @UncheckedSendable
+    private var queue = DispatchQueue(label: DiskCache.self)
     
     public static var defaultLocation: URL {
         URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.cachesDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)[0]).appendingPathComponent("com.vmanot.API.DiskCache.default")
@@ -63,7 +64,7 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> 
         }
     }
     
-    private func cache<T: Encodable>(_ value: T, forKey key: String) async throws {
+    private func cache<T: Encodable & Sendable>(_ value: T, forKey key: String) async throws {
         try await Just((value, key))
             .setFailureType(to: Error.self)
             .subscribe(on: queue)
@@ -73,7 +74,7 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> 
             .output()
     }
     
-    private func retrieveValue<T: Decodable>(
+    private func retrieveValue<T: Decodable & Sendable>(
         _ type: T.Type,
         forKey key: String
     ) async throws -> T? {
@@ -169,7 +170,10 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> 
         }
     }
     
-    private func setDataSync<T: Encodable>(_ data: T, key: String) -> AnySingleOutputPublisher<Void, Error> {
+    private func setDataSync<T: Encodable & Sendable>(
+        _ data: T,
+        key: String
+    ) -> AnySingleOutputPublisher<Void, Error> {
         let url = urlForKey(key)
         let path = url.path
         
@@ -280,12 +284,15 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable> 
     }
 }
 
-// MARK: - Conformances -
+// MARK: - Conformances
 
 @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
 extension DiskCache: KeyedCache {
     public func cache(_ value: Value, forKey key: Key) async throws {
-        try await cache(EncodableImpl(value.encode(to:)), forKey: key.stringValue)
+        try await cache(
+            EncodableImpl({ try value.encode(to: $0) }),
+            forKey: key.stringValue
+        )
     }
     
     public func retrieveValue(forKey key: Key) async throws -> Value? {
@@ -320,18 +327,18 @@ extension DiskCache: KeyedCache {
 
 @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
 extension DiskCache: KeyedCodingCache where Key == AnyCodingKey, Value == AnyCodable {
-    public func cache<T: Encodable>(_ value: T, forKey key: Key) async throws  {
+    public func cache<T: Encodable & Sendable>(_ value: T, forKey key: Key) async throws  {
         try await cache(value, forKey: key.stringValue)
     }
     
-    public func retrieveValue<T: Decodable>(
+    public func retrieveValue<T: Decodable & Sendable>(
         _ type: T.Type,
         forKey key: Key
     ) async throws -> T? {
         try await retrieveValue(type, forKey: key.stringValue)
     }
     
-    public func retrieveInMemoryValue<T: Decodable>(
+    public func retrieveInMemoryValue<T: Decodable & Sendable>(
         _ type: T.Type,
         forKey key: Key
     ) throws -> T? {
@@ -339,7 +346,7 @@ extension DiskCache: KeyedCodingCache where Key == AnyCodingKey, Value == AnyCod
     }
 }
 
-// MARK: - Auxiliary -
+// MARK: - Auxiliary
 
 fileprivate extension String {
     var md5Hash: String {

@@ -28,7 +28,7 @@ public protocol Client: Logging, ObservableObject {
     var _resourceCache: _ResourceCache { get }
 }
 
-// MARK: - Implementation -
+// MARK: - Implementation
 
 extension Client where _ResourceCache == EmptyKeyedCache<AnyCodingKey, AnyCodable> {
     public var _resourceCache: _ResourceCache {
