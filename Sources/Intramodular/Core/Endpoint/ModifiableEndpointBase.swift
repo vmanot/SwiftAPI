@@ -5,13 +5,19 @@
 import Swallow
 
 @propertyWrapper
-open class ModifiableEndpointBase<Root: ProgramInterface, Input, Output, Options>: ModifiableEndpoint, Initiable {
+open class ModifiableEndpointBase<Root: ProgramInterface, Input, Output, Options>: ModifiableEndpoint, Initiable, @unchecked Sendable {
     public typealias Request = Root.Request
     
     public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>
     public typealias DecodeOutputContext = EndpointDecodeOutputContext<Root, Input, Output, Options>
     
-    private var buildRequestTransform: (_ request: Root.Request, _ context: BuildRequestTransformContext) throws -> Root.Request = { request, context in request }
+    private var buildRequestTransform: @Sendable (
+        _ request: Root.Request,
+        _ context: BuildRequestTransformContext
+    ) throws -> Root.Request = { request, context in
+        request
+    }
+    
     private var outputTransform: (_ output: Output, _ context: DecodeOutputTransformContext) throws -> Output = { output, context in output }
     
     open var wrappedValue: ModifiableEndpointBase<Root, Input, Output, Options> {

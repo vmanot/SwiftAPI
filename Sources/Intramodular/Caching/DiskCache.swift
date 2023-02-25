@@ -19,7 +19,7 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable &
     }
     
     private let logger = os.Logger(subsystem: "com.vmanot.API", category: "DiskCache")
-    @UncheckedSendable
+    @_UncheckedSendable
     private var queue = DispatchQueue(label: DiskCache.self)
     
     public static var defaultLocation: URL {

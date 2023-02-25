@@ -85,6 +85,12 @@ extension Client {
     ) async throws -> E.Output where E.Root == Interface, E.Options == Void {
         try await run(endpoint, with: input).value
     }
+    
+    public func run<E: Endpoint>(
+        _ endpoint: KeyPath<Interface, E>
+    ) async throws -> E.Output where E.Root == Interface, E.Input == Void, E.Options == Void {
+        try await run(endpoint, with: ()).value
+    }
 }
 
 extension Client {
