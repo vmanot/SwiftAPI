@@ -290,7 +290,7 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable &
 extension DiskCache: KeyedCache {
     public func cache(_ value: Value, forKey key: Key) async throws {
         try await cache(
-            EncodableImpl({ try value.encode(to: $0) }),
+            AnyEncodable({ try value.encode(to: $0) }),
             forKey: key.stringValue
         )
     }
