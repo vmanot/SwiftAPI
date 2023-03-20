@@ -38,7 +38,7 @@ public class AnyResource<Value>: ResourceType {
         
         self.publisherImpl = { resource.publisher.eraseToAnyPublisher() }
     
-        self._configuration = .init(getter: { resource.configuration }, setter: { resource.configuration = $0 })
+        self._configuration = .init(get: { resource.configuration }, set: { resource.configuration = $0 })
         self.latestValueImpl = { resource.latestValue }
         self.unwrapImpl = resource.unwrap
         self.fetchImpl = resource.fetch
