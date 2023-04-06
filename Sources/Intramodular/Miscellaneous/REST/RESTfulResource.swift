@@ -15,10 +15,10 @@ public final class RESTfulResource<
     Client: API.Client,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
->: CancellablesHolder, ResourceType where GetEndpoint.Root == Client.Interface, SetEndpoint.Root == Client.Interface {
+>: CancellablesHolder, _ResourcePropertyWrapperType where GetEndpoint.Root == Client.Interface, SetEndpoint.Root == Client.Interface {
     typealias EndpointCoordinator<E: Endpoint> = RESTfulResourceEndpointCoordinator<Client, E, Value> where Client.Interface == E.Root
     
-    public var configuration: ResourceConfiguration<Value> {
+    public var configuration: _ResourceConfiguration<Value> {
         didSet {
             decacheValueIfNecessary()
         }
@@ -85,12 +85,12 @@ public final class RESTfulResource<
         }
     }
     
-    public var projectedValue: AnyResource<Value> {
+    public var projectedValue: _AnyResource<Value> {
         .init(self)
     }
     
     init(
-        configuration: ResourceConfiguration<Value>,
+        configuration: _ResourceConfiguration<Value>,
         get: EndpointCoordinator<GetEndpoint>,
         set: EndpointCoordinator<SetEndpoint>
     ) {

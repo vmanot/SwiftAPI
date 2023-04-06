@@ -28,7 +28,7 @@ public protocol PaginatedListType: _opaque_PaginatedListType, Sequence {
     mutating func concatenateInPlace(with other: Self) throws
 }
 
-extension ResourceType where Value: PaginatedListType {
+extension _ResourcePropertyWrapperType where Value: PaginatedListType {
     public func fetchAllNext() -> AnyTask<Value, Error> {
         defer {
             if latestValue == nil {

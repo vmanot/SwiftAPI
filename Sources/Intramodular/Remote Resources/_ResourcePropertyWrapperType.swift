@@ -6,11 +6,11 @@ import Combine
 import Merge
 import Swallow
 
-public protocol ResourceType: ObservableObject {
+public protocol _ResourcePropertyWrapperType: ObservableObject {
     associatedtype Value
     associatedtype ValueStreamPublisher: Publisher where ValueStreamPublisher.Output == Result<Value, Error>, ValueStreamPublisher.Failure == Never
     
-    var configuration: ResourceConfiguration<Value> { get set }
+    var configuration: _ResourceConfiguration<Value> { get set }
     var publisher: ValueStreamPublisher { get }
     var latestValue: Value? { get }
     

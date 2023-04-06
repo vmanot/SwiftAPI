@@ -14,7 +14,7 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializ
         case _currentCursor
         case _nextCursor
     }
-        
+    
     private var _cursorsConsumed: [PaginationCursor?] = []
     private var _tail: OrderedDictionary<PaginationCursor?, [Item]?> = [:]
     private var _head: [Item]?
@@ -78,7 +78,7 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializ
 
 extension CursorPaginatedList: CustomStringConvertible {
     public var description: String {
-        all.description // FIXME
+        TODO.unimplemented
     }
 }
 

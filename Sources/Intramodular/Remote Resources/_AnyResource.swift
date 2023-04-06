@@ -7,11 +7,11 @@ import Swallow
 
 /// A type-erased resource.
 ///
-/// An instance of `AnyResource` forwards its operations to an underlying base resource having the same `Value` type, hiding the specifics of the underlying resource.
-public class AnyResource<Value>: ResourceType {
+/// An instance of `_AnyResource` forwards its operations to an underlying base resource having the same `Value` type, hiding the specifics of the underlying resource.
+public class _AnyResource<Value>: _ResourcePropertyWrapperType {
     public typealias ValueStreamPublisher = AnyPublisher<Result<Value, Error>, Never>
     
-    public let base: any ResourceType
+    public let base: any _ResourcePropertyWrapperType
     public let objectWillChange: AnyObjectWillChangePublisher
     
     let publisherImpl: () -> ValueStreamPublisher
@@ -20,7 +20,7 @@ public class AnyResource<Value>: ResourceType {
     let fetchImpl: () -> AnyTask<Value, Error>
     
     @Inout
-    public var configuration: ResourceConfiguration<Value>
+    public var configuration: _ResourceConfiguration<Value>
     
     public var publisher: ValueStreamPublisher {
         publisherImpl()
@@ -30,7 +30,7 @@ public class AnyResource<Value>: ResourceType {
         latestValueImpl()
     }
     
-    public init<Resource: ResourceType>(
+    public init<Resource: _ResourcePropertyWrapperType>(
         _ resource: Resource
     ) where Resource.Value == Value {
         self.base = resource
@@ -58,7 +58,7 @@ public class AnyResource<Value>: ResourceType {
 
 extension Result {
     public init?(
-        resource: AnyResource<Success>
+        resource: _AnyResource<Success>
     ) where Failure == Error {
         do {
             if let value = try resource.unwrap() {

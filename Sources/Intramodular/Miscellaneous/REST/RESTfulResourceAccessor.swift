@@ -23,7 +23,7 @@ public final class RESTfulResourceAccessor<
     fileprivate let base: Resource
     fileprivate var clientSubscription: AnyCancellable?
     
-    public var projectedValue: AnyResource<Value> {
+    public var projectedValue: _AnyResource<Value> {
         .init(base)
     }
     
@@ -40,7 +40,7 @@ public final class RESTfulResourceAccessor<
         get: Resource.EndpointCoordinator<GetEndpoint>,
         set: Resource.EndpointCoordinator<SetEndpoint>
     ) {
-        var configuration = ResourceConfiguration<Value>()
+        var configuration = _ResourceConfiguration<Value>()
         
         configuration.persistentIdentifier = persistentIdentifier
         

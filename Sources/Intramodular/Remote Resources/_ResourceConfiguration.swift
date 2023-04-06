@@ -5,7 +5,7 @@
 import Merge
 import Swallow
 
-public struct ResourceConfiguration<Value> {
+public struct _ResourceConfiguration<Value> {
     public enum CachePolicy: String, Codable, Hashable {
         case reloadIgnoringLocalCacheData
         case returnCacheDataElseLoad
