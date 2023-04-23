@@ -58,7 +58,10 @@ public final class AppStorageCache: KeyedCodingCache {
         return try coder.decode(AnyCodable.self, from: data)
     }
     
-    public func retrieveInMemoryValue<T: Decodable>(_ type: T.Type, forKey key: AnyCodingKey) throws -> T? {
+    public func retrieveInMemoryValue<T: Decodable>(
+        _ type: T.Type,
+        forKey key: AnyCodingKey
+    ) throws -> T? {
         guard let data = domainData[key.stringValue] else {
             return nil
         }

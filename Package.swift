@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.7
 
 import PackageDescription
 
@@ -14,10 +14,10 @@ let package = Package(
         .library(name: "API", targets: ["API"])
     ],
     dependencies: [
-        .package(url: "https://github.com/vmanot/Compute.git", .branch("master")),
-        .package(url: "https://github.com/vmanot/Diagnostics.git", .branch("master")),
-        .package(url: "https://github.com/vmanot/Merge.git", .branch("master")),
-        .package(url: "https://github.com/vmanot/Swallow.git", .branch("master")),
+        .package(url: "https://github.com/vmanot/Compute.git", branch: "master"),
+        .package(url: "https://github.com/vmanot/Diagnostics.git", branch: "master"),
+        .package(url: "https://github.com/vmanot/Merge.git", branch: "master"),
+        .package(url: "https://github.com/vmanot/Swallow.git", branch: "master"),
     ],
     targets: [
         .target(
