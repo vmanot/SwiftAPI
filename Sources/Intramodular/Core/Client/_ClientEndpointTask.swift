@@ -24,11 +24,7 @@ final class _ClientEndpointTask<Client: API.Client, Endpoint: API.Endpoint>: Obs
     var status: TaskStatus<Endpoint.Output, Client.Interface.Error> {
         base.status
     }
-    
-    var progress: Progress {
-        base.progress
-    }
-    
+
     init(
         client: Client,
         endpoint: Endpoint,
