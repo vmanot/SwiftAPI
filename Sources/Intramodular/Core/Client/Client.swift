@@ -95,7 +95,7 @@ extension Client {
 
 extension Client {
     @available(*, deprecated, message: "Use Client.run(_:) instead.")
-    public subscript<Endpoint: API.Endpoint>(
+    public subscript<Endpoint: SwiftAPI.Endpoint>(
         dynamicMember keyPath: KeyPath<Interface, Endpoint>
     ) -> _ClientRunEndpointFunction<Endpoint> where Endpoint.Root == Interface, Endpoint.Options == Void {
         .init { (input, options) in
@@ -104,7 +104,7 @@ extension Client {
     }
     
     @available(*, deprecated, message: "Use Client.run(_:with:options:) instead.")
-    public subscript<Endpoint: API.Endpoint>(
+    public subscript<Endpoint: SwiftAPI.Endpoint>(
         dynamicMember keyPath: KeyPath<Interface, Endpoint>
     ) -> _ClientRunEndpointFunction<Endpoint> where Endpoint.Root == Interface, Endpoint.Options: ExpressibleByNilLiteral {
         .init { (input, options) in
@@ -113,7 +113,7 @@ extension Client {
     }
     
     @available(*, deprecated, message: "Use Client.run(_:with:options:) instead.")
-    public subscript<Endpoint: API.Endpoint>(
+    public subscript<Endpoint: SwiftAPI.Endpoint>(
         dynamicMember keyPath: KeyPath<Interface, Endpoint>
     ) -> _ClientRunEndpointFunction<Endpoint> where Endpoint.Root == Interface {
         .init { (input, options) in

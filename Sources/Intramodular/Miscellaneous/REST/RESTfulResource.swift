@@ -12,7 +12,7 @@ import Swallow
 /// This type is responsible for getting/setting resource values.
 public final class RESTfulResource<
     Value: Sendable,
-    Client: API.Client,
+    Client: SwiftAPI.Client,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
 >: CancellablesHolder, _ResourcePropertyWrapperType where GetEndpoint.Root == Client.Interface, SetEndpoint.Root == Client.Interface {

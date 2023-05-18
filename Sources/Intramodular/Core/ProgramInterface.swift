@@ -11,7 +11,7 @@ public protocol ProgramInterface: Identifiable {
     associatedtype Root: ProgramInterface = Self where Request == Root.Request
     
     /// The request type associated with this API.
-    associatedtype Request: API.Request
+    associatedtype Request: SwiftAPI.Request
     
     /// The error type associated with this API.
     associatedtype Error: ProgramInterfaceError = DefaultProgramInterfaceError<Self> where Error.Interface == Self
@@ -22,7 +22,7 @@ public protocol ProgramInterface: Identifiable {
 
 // MARK: - Helpers
 
-public struct EmptyProgramInterface<Root: ProgramInterface, Request: API.Request, Error: ProgramInterfaceError> {
+public struct EmptyProgramInterface<Root: ProgramInterface, Request: SwiftAPI.Request, Error: ProgramInterfaceError> {
     public init() {
         
     }

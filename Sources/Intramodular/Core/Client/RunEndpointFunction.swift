@@ -6,7 +6,7 @@ import Foundation
 import Merge
 import Swallow
 
-public struct _ClientRunEndpointFunction<Endpoint: API.Endpoint>  {
+public struct _ClientRunEndpointFunction<Endpoint: SwiftAPI.Endpoint>  {
     public typealias Input = Endpoint.Input
     public typealias Options = Endpoint.Options
     public typealias Output = Endpoint.Output

@@ -7,7 +7,7 @@ import ObjectiveC
 import Swift
 
 public protocol RequestSession<Request>: CancellablesHolder {
-    associatedtype Request: API.Request
+    associatedtype Request: SwiftAPI.Request
     associatedtype RequestTask: ObservableTask where RequestTask.Success == Request.Response, RequestTask.Error == Request.Error
     
     func task(with _: Request) -> RequestTask

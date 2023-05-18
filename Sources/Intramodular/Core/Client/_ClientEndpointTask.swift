@@ -6,7 +6,7 @@ import Foundation
 import Merge
 import Swallow
 
-final class _ClientEndpointTask<Client: API.Client, Endpoint: API.Endpoint>: ObservableTask where Endpoint.Root == Client.Interface {
+final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endpoint>: ObservableTask where Endpoint.Root == Client.Interface {
     typealias Success = Endpoint.Output
     typealias Error = Client.Interface.Error
     

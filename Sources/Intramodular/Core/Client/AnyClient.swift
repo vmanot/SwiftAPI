@@ -27,7 +27,7 @@ public final class AnyClient<Interface: ProgramInterface, Session: RequestSessio
         getSessionCache()
     }
     
-    public init<Client: API.Client>(
+    public init<Client: SwiftAPI.Client>(
         _ client: Client
     ) where Client.Interface == Interface, Client.Session == Session {
         self.objectWillChange = .init(from: client)

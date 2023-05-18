@@ -6,8 +6,8 @@ import Merge
 import Swallow
 
 final class RESTfulResourceEndpointCoordinator<
-    Client: API.Client,
-    Endpoint: API.Endpoint,
+    Client: SwiftAPI.Client,
+    Endpoint: SwiftAPI.Endpoint,
     Value
 >: Cancellable where Client.Interface == Endpoint.Root {
     @usableFromInline
