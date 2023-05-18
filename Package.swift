@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "API",
+    name: "SwiftAPI",
     platforms: [
         .iOS(.v13),
         .macOS(.v11),
@@ -11,7 +11,12 @@ let package = Package(
         .watchOS(.v6)
     ],
     products: [
-        .library(name: "API", targets: ["API"])
+        .library(
+            name: "SwiftAPI",
+            targets: [
+                "SwiftAPI"
+            ]
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/vmanot/Merge.git", branch: "master"),
@@ -19,7 +24,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "API",
+            name: "SwiftAPI",
             dependencies: [
                 "Merge",
                 "Swallow"
