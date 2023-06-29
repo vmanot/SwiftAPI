@@ -14,7 +14,7 @@ public protocol ProgramInterface: Identifiable {
     associatedtype Request: SwiftAPI.Request
     
     /// The error type associated with this API.
-    associatedtype Error: ProgramInterfaceError = DefaultProgramInterfaceError<Self> where Error.Interface == Self
+    associatedtype Error: APIErrorProtocol = _DefaultAPIError<Self> where Error.API == Self
     
     /// The data schema of this API.
     associatedtype Schema = Never
@@ -22,7 +22,7 @@ public protocol ProgramInterface: Identifiable {
 
 // MARK: - Helpers
 
-public struct EmptyProgramInterface<Root: ProgramInterface, Request: SwiftAPI.Request, Error: ProgramInterfaceError> {
+public struct EmptyProgramInterface<Root: ProgramInterface, Request: SwiftAPI.Request, Error: APIErrorProtocol> {
     public init() {
         
     }

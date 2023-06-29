@@ -28,7 +28,11 @@ public final class AnyRequestSession<R: Request>: Identifiable, ObservableObject
     public init<S: RequestSession>(_ session: S) where S.Request == R {
         self.base = session
         self.cancellablesImpl = { session.cancellables }
-        self.taskImpl = { session.task(with: $0).eraseToAnyTask() }
+        self.taskImpl = {
+            session
+                .task(with: $0)
+                .eraseToAnyTask()
+        }
     }
     
     public func task(with request: R) -> AnyTask<R.Response, R.Error> {

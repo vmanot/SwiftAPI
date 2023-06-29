@@ -5,19 +5,24 @@
 import Foundation
 import Swift
 
-public protocol ProgramInterfaceError: Error {
-    associatedtype Interface: ProgramInterface
+public protocol APIErrorProtocol: Error {
+    associatedtype API: ProgramInterface
     
-    static func badRequest(_ error: Interface.Request.Error) -> Self
-    static func runtime(_ error: Error) -> Self
+    static func badRequest(
+        _ error: API.Request.Error
+    ) -> Self
+    
+    static func runtime(
+        _ error: Error
+    ) -> Self
 }
 
-public enum DefaultProgramInterfaceError<Interface: ProgramInterface>: ProgramInterfaceError {
-    case badRequest(Interface.Request.Error)
+public enum _DefaultAPIError<API: ProgramInterface>: APIErrorProtocol {
+    case badRequest(API.Request.Error)
     case runtime(Error)
 }
 
-extension DefaultProgramInterfaceError: LocalizedError {
+extension _DefaultAPIError: LocalizedError {
     public var errorDescription: String? {
         switch self {
             case .badRequest(let error):
