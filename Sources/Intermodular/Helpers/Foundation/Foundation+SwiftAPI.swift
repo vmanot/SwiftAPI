@@ -2,9 +2,9 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Diagnostics
 import Merge
 import Foundation
-import ObjectiveC
 import Swift
 
 extension URLRequest: Request {
@@ -15,7 +15,15 @@ extension URLRequest: Request {
 extension URLSession: RequestSession {
     public typealias Request = URLRequest
     
-    public func task(with request: Request) -> AnyTask<DataTaskPublisher.Output, DataTaskPublisher.Failure> {
+    public func task(
+        with request: Request
+    ) -> AnyTask<DataTaskPublisher.Output, DataTaskPublisher.Failure> {
         dataTaskPublisher(for: request).convertToTask()
+    }
+}
+
+extension URLError: _ErrorX {
+    public var traits: ErrorTraits {
+        [.domain(.networking)]
     }
 }

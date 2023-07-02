@@ -6,17 +6,17 @@ import FoundationX
 import Merge
 import Swallow
 
-public final class AnyClient<Interface: ProgramInterface, Session: RequestSession>: Client where Interface.Request == Session.Request {
+public final class AnyClient<API: APISpecification, Session: RequestSession>: Client where API.Request == Session.Request {
     public typealias SessionCache = AnyKeyedCache<Session.Request, Session.Request.Response>
     
-    private let getInterface: () -> Interface
+    private let getSpecification: () -> API
     private let getSession: () -> Session
     private let getSessionCache: () -> SessionCache
     
     public let objectWillChange: AnyObjectWillChangePublisher
     
-    public var interface: Interface {
-        getInterface()
+    public var interface: API {
+        getSpecification()
     }
     
     public var session: Session {
@@ -29,9 +29,9 @@ public final class AnyClient<Interface: ProgramInterface, Session: RequestSessio
     
     public init<Client: SwiftAPI.Client>(
         _ client: Client
-    ) where Client.Interface == Interface, Client.Session == Session {
+    ) where Client.API == API, Client.Session == Session {
         self.objectWillChange = .init(from: client)
-        self.getInterface = { client.interface }
+        self.getSpecification = { client.interface }
         self.getSession = { client.session }
         self.getSessionCache = { AnyKeyedCache(client.sessionCache) }
     }

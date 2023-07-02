@@ -5,7 +5,7 @@
 import Swallow
 
 @propertyWrapper
-open class ModifiableEndpointBase<Root: ProgramInterface, Input, Output, Options>: ModifiableEndpoint, Initiable, @unchecked Sendable {
+open class ModifiableEndpointBase<Root: APISpecification, Input, Output, Options>: ModifiableEndpoint, Initiable, @unchecked Sendable {
     public typealias Request = Root.Request
     
     public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>

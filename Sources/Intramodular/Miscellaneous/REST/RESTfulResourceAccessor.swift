@@ -13,9 +13,9 @@ public final class RESTfulResourceAccessor<
     Container: Client,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
->: ResourceAccessor where GetEndpoint.Root == Container.Interface, SetEndpoint.Root == Container.Interface {
+>: ResourceAccessor where GetEndpoint.Root == Container.API, SetEndpoint.Root == Container.API {
     public typealias Resource = RESTfulResource<Value, Container, GetEndpoint, SetEndpoint>
-    public typealias Root = Container.Interface
+    public typealias Root = Container.API
     
     fileprivate weak var client: Container?
     
@@ -56,7 +56,7 @@ public final class RESTfulResourceAccessor<
         _enclosingInstance object: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value?>,
         storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, RESTfulResourceAccessor>
-    ) -> Value? where EnclosingSelf.Interface == Root {
+    ) -> Value? where EnclosingSelf.API == Root {
         get {
             object[keyPath: storageKeyPath].receiveEnclosingInstance(object, storageKeyPath: storageKeyPath)
             
@@ -72,7 +72,7 @@ public final class RESTfulResourceAccessor<
     func receiveEnclosingInstance<EnclosingSelf: Client>(
         _ object:  EnclosingSelf,
         storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, RESTfulResourceAccessor>
-    ) where EnclosingSelf.Interface == Root {
+    ) where EnclosingSelf.API == Root {
         guard let client = object as? Container else {
             assertionFailure()
             
@@ -354,11 +354,11 @@ extension RESTfulResourceAccessor {
 
 // MARK: - API
 
-extension Client where Interface: RESTfulInterface {
+extension Client where API: RESTfulInterface {
     public typealias Resource<Value, GetEndpoint: Endpoint, SetEndpoint: Endpoint> = RESTfulResourceAccessor<
         Value,
         Self,
         GetEndpoint,
         SetEndpoint
-    > where GetEndpoint.Root == Interface, SetEndpoint.Root == Interface
+    > where GetEndpoint.Root == API, SetEndpoint.Root == API
 }

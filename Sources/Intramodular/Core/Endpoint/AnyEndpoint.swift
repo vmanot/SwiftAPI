@@ -5,7 +5,7 @@
 import Merge
 import Swift
 
-public struct AnyEndpoint<Root: ProgramInterface, Input, Output, Options>: Endpoint {
+public struct AnyEndpoint<Root: APISpecification, Input, Output, Options>: Endpoint {
     public typealias Request = Root.Request
     
     public typealias BuildRequestContext = EndpointBuildRequestContext<Root, Input, Output, Options>

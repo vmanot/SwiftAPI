@@ -2,24 +2,39 @@
 // Copyright (c) Vatsal Manot
 //
 
+import Diagnostics
 import Foundation
-import Swift
+import Swallow
 
-public protocol APIErrorProtocol: Error {
-    associatedtype API: ProgramInterface
+public enum APIErrors: _SubsystemDomain {
+    
+}
+
+public protocol APIErrorProtocol: _ErrorX {
+    associatedtype API: APISpecification
     
     static func badRequest(
         _ error: API.Request.Error
     ) -> Self
     
     static func runtime(
-        _ error: Error
+        _ error: AnyError
     ) -> Self
 }
 
-public enum _DefaultAPIError<API: ProgramInterface>: APIErrorProtocol {
+// MARK: - Initializers
+
+extension APIErrorProtocol {
+    public static func runtime(_ error: any Error) -> Self {
+        .runtime(AnyError(erasing: error))
+    }
+}
+
+// MARK: - Implemented Conformances
+
+public enum _DefaultAPIError<API: APISpecification>: APIErrorProtocol {
     case badRequest(API.Request.Error)
-    case runtime(Error)
+    case runtime(AnyError)
 }
 
 extension _DefaultAPIError: LocalizedError {

@@ -15,8 +15,8 @@ public final class RESTfulResource<
     Client: SwiftAPI.Client,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
->: CancellablesHolder, _ResourcePropertyWrapperType where GetEndpoint.Root == Client.Interface, SetEndpoint.Root == Client.Interface {
-    typealias EndpointCoordinator<E: Endpoint> = RESTfulResourceEndpointCoordinator<Client, E, Value> where Client.Interface == E.Root
+>: CancellablesHolder, _ResourcePropertyWrapperType where GetEndpoint.Root == Client.API, SetEndpoint.Root == Client.API {
+    typealias EndpointCoordinator<E: Endpoint> = RESTfulResourceEndpointCoordinator<Client, E, Value> where Client.API == E.Root
     
     public var configuration: _ResourceConfiguration<Value> {
         didSet {
@@ -27,7 +27,7 @@ public final class RESTfulResource<
     private let get: EndpointCoordinator<GetEndpoint>
     private let set: EndpointCoordinator<SetEndpoint>
     
-    private var _lastRootID: Client.Interface.ID?
+    private var _lastRootID: Client.API.ID?
     
     @Published private var _wrappedValue: Value? {
         didSet {

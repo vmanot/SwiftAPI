@@ -8,7 +8,7 @@ import Swallow
 /// An type that represents an API's endpoint.
 public protocol Endpoint {
     /// The API this endpoint is associated to.
-    associatedtype Root: ProgramInterface
+    associatedtype Root: APISpecification
     /// The endpoint's input type.
     associatedtype Input
     /// The endpoint's output type.
@@ -74,7 +74,7 @@ extension Endpoint {
 
 // MARK: - Auxiliary
 
-public struct EndpointBuildRequestContext<Root: ProgramInterface, Input, Output, Options> {
+public struct EndpointBuildRequestContext<Root: APISpecification, Input, Output, Options> {
     public let root: Root
     public let options: Options
     
@@ -84,7 +84,7 @@ public struct EndpointBuildRequestContext<Root: ProgramInterface, Input, Output,
     }
 }
 
-public struct EndpointDecodeOutputContext<Root: ProgramInterface, Input, Output, Options> {
+public struct EndpointDecodeOutputContext<Root: APISpecification, Input, Output, Options> {
     public let root: Root
     public let input: Input
     public let options: Options
@@ -99,7 +99,7 @@ public struct EndpointDecodeOutputContext<Root: ProgramInterface, Input, Output,
 }
 
 /// An unreachable endpoint.
-public struct NeverEndpoint<Root: ProgramInterface>: Endpoint {
+public struct NeverEndpoint<Root: APISpecification>: Endpoint {
     public typealias Input = Never
     public typealias Output = Never
     public typealias Options = Void

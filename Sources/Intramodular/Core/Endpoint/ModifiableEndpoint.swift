@@ -28,13 +28,13 @@ extension ModifiableEndpoint {
 
 // MARK: - Auxiliary
 
-public struct TransformModifiableEndpointBuildRequestContext<Root: ProgramInterface, Input, Output, Options> {
+public struct TransformModifiableEndpointBuildRequestContext<Root: APISpecification, Input, Output, Options> {
     public let root: Root
     public let input: Input
     public let options: Options
 }
 
-public struct TransformModifiableEndpointDecodeOutputContext<Root: ProgramInterface, Input, Output, Options> {
+public struct TransformModifiableEndpointDecodeOutputContext<Root: APISpecification, Input, Output, Options> {
     public let root: Root
     public let input: Input
     public let options: Options

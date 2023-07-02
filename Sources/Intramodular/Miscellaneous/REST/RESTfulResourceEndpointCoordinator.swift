@@ -9,7 +9,7 @@ final class RESTfulResourceEndpointCoordinator<
     Client: SwiftAPI.Client,
     Endpoint: SwiftAPI.Endpoint,
     Value
->: Cancellable where Client.Interface == Endpoint.Root {
+>: Cancellable where Client.API == Endpoint.Root {
     @usableFromInline
     class EndpointDependency {
         func isAvailable(in client: Client) -> Bool {
@@ -102,7 +102,7 @@ final class RESTfulResourceEndpointCoordinator<
     }
     
     private func handleEndpointOutput(
-        _ output: TaskResult<Endpoint.Output, Client.Interface.Error>
+        _ output: TaskResult<Endpoint.Output, Client.API.Error>
     ) -> TaskResult<Value, Error> {
         var result: TaskResult<Value, Error>
         
@@ -141,11 +141,11 @@ final class RESTfulResourceEndpointCoordinator<
         self.output = output
     }
     
-    convenience init() where Endpoint == NeverEndpoint<Client.Interface> {
+    convenience init() where Endpoint == NeverEndpoint<Client.API> {
         self.init(
-            dependencyGraph: { _ in throw Never.Reason.irrational },
-            endpoint: { _ in throw Never.Reason.irrational },
-            input: { _ in throw Never.Reason.irrational },
+            dependencyGraph: { _ in throw Never.Reason.unavailable },
+            endpoint: { _ in throw Never.Reason.unavailable },
+            input: { _ in throw Never.Reason.unavailable },
             output: Never.materialize
         )
     }

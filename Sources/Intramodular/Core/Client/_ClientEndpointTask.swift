@@ -6,23 +6,27 @@ import Foundation
 import Merge
 import Swallow
 
-final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endpoint>: ObservableTask where Endpoint.Root == Client.Interface {
+final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endpoint>: ObservableTask where Endpoint.Root == Client.API {
     typealias Success = Endpoint.Output
-    typealias Error = Client.Interface.Error
+    typealias Error = Client.API.Error
     
     let client: Client
     let endpoint: Endpoint
     let input: Endpoint.Input
     let options: Endpoint.Options
     
-    private let base: AnyTask<Endpoint.Output, Client.Interface.Error>
+    private let base: AnyTask<Endpoint.Output, Client.API.Error>
     
-    var objectWillChange: AnyTask<Endpoint.Output, Client.Interface.Error>.ObjectWillChangePublisher {
+    var status: TaskStatus<Endpoint.Output, Client.API.Error> {
+        base.status
+    }
+    
+    var objectWillChange: AnyTask<Endpoint.Output, Client.API.Error>.ObjectWillChangePublisher {
         base.objectWillChange
     }
     
-    var status: TaskStatus<Endpoint.Output, Client.Interface.Error> {
-        base.status
+    var objectDidChange: AnyTask<Endpoint.Output, Client.API.Error>.ObjectDidChangePublisher {
+        base.objectDidChange
     }
 
     init(
@@ -54,6 +58,14 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
                     .session
                     .task(with: request)
                     .successPublisher
+                    .mapError {
+                        switch $0 {
+                            case .canceled:
+                                return try! Client.API.Request.Error(_catchAll: CancellationError())!
+                            case .error(let error):
+                                return error
+                        }
+                    }
                     .sinkResult({ [weak task] (result: Result<Endpoint.Root.Request.Response, Endpoint.Root.Request.Error>) in
                         switch result {
                             case .success(let value): do {
@@ -104,14 +116,6 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
     
     func start() {
         base.start()
-    }
-    
-    func pause() throws {
-        try base.pause()
-    }
-    
-    func resume() throws {
-        try base.resume()
     }
     
     func cancel() {

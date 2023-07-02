@@ -6,6 +6,6 @@ import Merge
 import Swift
 
 /// A REST interface.
-public protocol RESTfulInterface: ProgramInterface {
+public protocol RESTfulInterface: APISpecification {
     
 }
