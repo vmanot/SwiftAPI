@@ -67,6 +67,12 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
                         }
                     }
                     .sinkResult({ [weak task] (result: Result<Endpoint.Root.Request.Response, Endpoint.Root.Request.Error>) in
+                        guard let task = `task` else {
+                            assertionFailure()
+                            
+                            return
+                        }
+                        
                         switch result {
                             case .success(let value): do {
                                 do {
@@ -85,9 +91,13 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
                                         )
                                     )
                                     
-                                    task?.send(status: .success(output))
+                                    task.send(status: .success(output))
                                 } catch {
-                                    task?.send(status: .error(.runtime(error)))
+                                    if let error = error as? Client.API.Error {
+                                        task.send(status: .error(error))
+                                    } else {
+                                        task.send(status: .error(.runtime(error)))
+                                    }
                                     
                                     client.logger.error(
                                         error,
@@ -96,7 +106,7 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
                                 }
                             }
                             case .failure(let error): do {
-                                task?.send(status: .error(.runtime(error)))
+                                task.send(status: .error(.runtime(error)))
                                 
                                 client.logger.error(error, metadata: ["request": request])
                             }

@@ -28,6 +28,10 @@ extension APIErrorProtocol {
     public static func runtime(_ error: any Error) -> Self {
         .runtime(AnyError(erasing: error))
     }
+    
+    public init?(_catchAll error: AnyError) throws {
+        self = .runtime(error)
+    }
 }
 
 // MARK: - Implemented Conformances
