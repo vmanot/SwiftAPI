@@ -76,11 +76,6 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
                         switch result {
                             case .success(let value): do {
                                 do {
-                                    client.logger.debug(
-                                        "Received a request response",
-                                        metadata: ["response": value]
-                                    )
-                                    
                                     let output = try endpoint.decodeOutput(
                                         from: value,
                                         context: .init(
