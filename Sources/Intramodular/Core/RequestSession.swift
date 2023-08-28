@@ -6,7 +6,7 @@ import Merge
 import ObjectiveC
 import Swift
 
-public protocol RequestSession<Request>: CancellablesHolder {
+public protocol RequestSession<Request>: _CancellablesProviding {
     associatedtype Request: SwiftAPI.Request
     associatedtype RequestTask: ObservableTask where RequestTask.Success == Request.Response, RequestTask.Error == Request.Error
     

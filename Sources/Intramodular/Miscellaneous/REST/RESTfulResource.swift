@@ -15,7 +15,7 @@ public final class RESTfulResource<
     Client: SwiftAPI.Client,
     GetEndpoint: Endpoint,
     SetEndpoint: Endpoint
->: CancellablesHolder, _ResourcePropertyWrapperType where GetEndpoint.Root == Client.API, SetEndpoint.Root == Client.API {
+>: _CancellablesProviding, _ResourcePropertyWrapperType where GetEndpoint.Root == Client.API, SetEndpoint.Root == Client.API {
     typealias EndpointCoordinator<E: Endpoint> = RESTfulResourceEndpointCoordinator<Client, E, Value> where Client.API == E.Root
     
     public var configuration: _ResourceConfiguration<Value> {
