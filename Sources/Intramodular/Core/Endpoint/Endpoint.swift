@@ -123,6 +123,6 @@ public struct NeverEndpoint<Root: APISpecification>: Endpoint {
         from response: Request.Response,
         context: DecodeOutputContext
     ) throws -> Output {
-        fatalError(reason: .impossible)
+        fatalError(.impossible)
     }
 }
