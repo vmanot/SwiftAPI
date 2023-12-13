@@ -59,7 +59,17 @@ open class ModifiableEndpointBase<Root: APISpecification, Input, Output, Options
         from response: Request.Response,
         context: DecodeOutputContext
     ) throws -> Output {
-        try outputTransform(try decodeOutputBase(from: response, context: context), .init(root: context.root, input: context.input, options: context.options))
+        try outputTransform(
+            try decodeOutputBase(
+                from: response,
+                context: context
+            ),
+            .init(
+                root: context.root,
+                input: context.input,
+                options: context.options
+            )
+        )
     }
     
     public final func addBuildRequestTransform(
