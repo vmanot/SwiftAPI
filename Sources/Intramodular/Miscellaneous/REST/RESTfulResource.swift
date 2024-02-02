@@ -113,12 +113,13 @@ public final class RESTfulResource<
             .successPublisher
             .receiveOnMainThread()
             .sinkResult(in: cancellables) { result in
-                if let value = result.leftValue {
-                    self._wrappedValue = value
-                } else {
-                    if self._wrappedValue != nil {
+                switch result {
+                    case .success(let value):
+                        self._wrappedValue = value
+                    case .failure(let error):
+                        runtimeIssue(error)
+                        
                         self._wrappedValue = nil
-                    }
                 }
             }
         

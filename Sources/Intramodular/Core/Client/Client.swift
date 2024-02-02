@@ -10,9 +10,7 @@ import Swallow
 @available(*, deprecated, renamed: "Client")
 public typealias Repository = Client
 
-/// A data client.
-///
-/// The combination of a program interface and a compatible request session.
+/// A client for an API specification.
 @dynamicMemberLookup
 public protocol Client: Logging, ObservableObject {
     associatedtype API: APISpecification

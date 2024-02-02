@@ -81,6 +81,10 @@ public final class RESTfulResourceAccessor<
         
         self.client = client
         self.base._client = client
+        
+        if _isValueNil(self.wrappedValue) {
+            projectedValue.fetch()
+        }
     }
 }
 
