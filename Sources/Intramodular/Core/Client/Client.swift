@@ -26,12 +26,12 @@ public protocol Client: Logging, ObservableObject {
     var _resourceCache: _ResourceCache { get }
 }
 
+// MARK: - Implementation
+
 extension Client {
     @available(*, deprecated, renamed: "API")
     public typealias Interface = API
 }
-
-// MARK: - Implementation
 
 extension Client where _ResourceCache == EmptyKeyedCache<AnyCodingKey, AnyCodable> {
     public var _resourceCache: _ResourceCache {
@@ -95,6 +95,8 @@ extension Client {
         try await run(endpoint, with: ()).value
     }
 }
+
+// MARK: - Deprecated
 
 extension Client {
     @available(*, deprecated, message: "Use Client.run(_:) instead.")

@@ -18,9 +18,21 @@ public protocol APISpecification: Identifiable {
     associatedtype Error: APIErrorProtocol = _DefaultAPIError<Self> where Error.API == Self
     /// The data schema of this API.
     associatedtype Schema = Never
+    
+    func update(_ request: inout Root.Request)
 }
 
-// MARK: - Helpers
+// MARK: - Implementation
+
+extension APISpecification {
+    public func update(
+        _ request: inout Root.Request
+    ) {
+        // do nothing
+    }
+}
+
+// MARK: - Auxiliary
 
 public struct EmptyAPISpecification<Root: APISpecification, Request: SwiftAPI.Request, Error: APIErrorProtocol> {
     public init() {
