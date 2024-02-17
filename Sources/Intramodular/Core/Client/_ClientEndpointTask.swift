@@ -91,7 +91,7 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
         if let response = try? cache.retrieveInMemoryValue(forKey: request), let output = try? endpoint.decodeOutput(from: response, context: .init(root: client.interface, input: input, options: options, request: request)) {
             task.send(status: .success(output))
             
-            return .empty()
+            return AnyCancellable.empty()
         }
         
         let result = client
