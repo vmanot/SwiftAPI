@@ -81,7 +81,7 @@ public final class RESTfulResource<
         get {
             _wrappedValue
         } set{
-            _wrappedValue = newValue // FIXME!!!
+            _wrappedValue = newValue // FIXME: !!!
         }
     }
     
@@ -102,7 +102,7 @@ public final class RESTfulResource<
     }
     
     public func unwrap() throws -> Value? {
-        latestValue // FIXME!!!
+        latestValue // FIXME: !!!
     }
     
     @discardableResult

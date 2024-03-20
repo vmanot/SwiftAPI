@@ -4,6 +4,7 @@
 
 import Compute
 import Swallow
+import OrderedCollections
 import Swift
 
 public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializable {
@@ -37,7 +38,7 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializ
         if let head = _head {
             _cursorsConsumed.append(_currentCursor)
             
-            _tail.insert((key: _currentCursor, value: head), at: _tail.endIndex)
+            _tail.updateValue(head, forKey: _currentCursor, insertingAt: _tail.elements.endIndex)
         }
         
         _head = partial.items
@@ -65,7 +66,7 @@ public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializ
         if let head = _head {
             _cursorsConsumed.append(_currentCursor)
             
-            _tail.insert((key: _currentCursor, value: head), at: _tail.endIndex)
+            _tail.updateValue(head, forKey: _currentCursor, insertingAt: _tail.elements.endIndex)
         }
         
         _head = other._head
