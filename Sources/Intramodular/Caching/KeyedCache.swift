@@ -2,11 +2,12 @@
 // Copyright (c) Vatsal Manot
 //
 
+import FoundationX
 import Merge
 import Swallow
 
 /// A keyed cache suitable for caching and retrieving values.
-public protocol KeyedCache {
+public protocol KeyedCache<Key, Value> {
     associatedtype Key: Hashable
     associatedtype Value: Sendable
     
@@ -50,6 +51,10 @@ extension KeyedCache {
 }
 
 // MARK: - Conformances
+
+extension _NSCacheWithExpiry: KeyedCache {
+    
+}
 
 /// A keyed-cache where every option is a no-op.
 ///

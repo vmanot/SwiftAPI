@@ -23,11 +23,17 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable &
     private var queue = DispatchQueue(label: DiskCache.self)
     
     public static var defaultLocation: URL {
-        URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.cachesDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)[0]).appendingPathComponent("com.vmanot.API.DiskCache.default")
+        URL(
+            fileURLWithPath: NSSearchPathForDirectoriesInDomains(
+                FileManager.SearchPathDirectory.cachesDirectory,
+                FileManager.SearchPathDomainMask.userDomainMask,
+                true
+            )[0]
+        ).appendingPathComponent("com.vmanot.API.DiskCache.default")
     }
     
     private let location: URL
-    private let coder: TopLevelDataCoder
+    private let coder: any TopLevelDataCoder
     private var size: UInt64 = 0
     private let fileManager: FileManager
     
@@ -42,7 +48,7 @@ public final class DiskCache<Key: Hashable & StringConvertible, Value: Codable &
     
     public init(
         location: URL = DiskCache<AnyCodingKey, AnyCodable>.defaultLocation,
-        coder: TopLevelDataCoder,
+        coder: any TopLevelDataCoder,
         capacity: UInt64 = 100 * 1024 * 1024,
         fileManager: FileManager = FileManager.default
     ) {

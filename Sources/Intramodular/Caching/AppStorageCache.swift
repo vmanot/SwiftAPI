@@ -10,7 +10,7 @@ import Swallow
 public final class AppStorageCache: KeyedCodingCache {
     private let userDefaults: UserDefaults
     private let domainName: String
-    private let coder: TopLevelDataCoder
+    private let coder: any TopLevelDataCoder
     
     private var inMemoryDomainData: [String: Data]?
     
@@ -36,7 +36,10 @@ public final class AppStorageCache: KeyedCodingCache {
         }
     }
 
-    public init(domainName: String, coder: TopLevelDataCoder) {
+    public init(
+        domainName: String,
+        coder: any TopLevelDataCoder
+    ) {
         self.userDefaults = .standard
         self.domainName = domainName
         self.coder = coder
