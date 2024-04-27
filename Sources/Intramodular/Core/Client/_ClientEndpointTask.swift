@@ -9,10 +9,7 @@ import Swallow
 /// An observable task used by a `Client` to run an endpoint.
 ///
 /// This is an internal type.
-final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endpoint>: ObservableTask where Endpoint.Root == Client.API {
-    typealias Success = Endpoint.Output
-    typealias Error = Client.API.Error
-    
+final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endpoint> where Endpoint.Root == Client.API {
     private let client: Client
     private let endpoint: Endpoint
     private let input: Endpoint.Input
@@ -20,19 +17,7 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
     private let cache: AnyKeyedCache<Endpoint.Request, Endpoint.Request.Response>
     
     private var base: AnyTask<Endpoint.Output, Client.API.Error>!
-    
-    var status: TaskStatus<Endpoint.Output, Client.API.Error> {
-        base.status
-    }
-    
-    var objectWillChange: AnyTask<Endpoint.Output, Client.API.Error>.ObjectWillChangePublisher {
-        base.objectWillChange
-    }
-    
-    var objectDidChange: AnyTask<Endpoint.Output, Client.API.Error>.ObjectDidChangePublisher {
-        base.objectDidChange
-    }
-    
+        
     init(
         client: Client,
         endpoint: Endpoint,
@@ -60,15 +45,7 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
         })
         .eraseToAnyTask()
     }
-    
-    func start() {
-        base.start()
-    }
-    
-    func cancel() {
-        base.cancel()
-    }
-    
+        
     private func _buildRequest() throws -> Endpoint.Request {
         var result = try endpoint.buildRequest(
             from: input,
@@ -161,5 +138,30 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
                 self.client.logger.error(error, metadata: ["request": request])
             }
         }
+    }
+}
+
+extension _ClientEndpointTask: ObservableTask {
+    typealias Success = Endpoint.Output
+    typealias Error = Client.API.Error
+
+    var status: TaskStatus<Success, Error> {
+        base.status
+    }
+    
+    var objectWillChange: AnyTask<Success, Error>.ObjectWillChangePublisher {
+        base.objectWillChange
+    }
+    
+    var objectDidChange: AnyTask<Success, Error>.ObjectDidChangePublisher {
+        base.objectDidChange
+    }
+    
+    func start() {
+        base.start()
+    }
+    
+    func cancel() {
+        base.cancel()
     }
 }
