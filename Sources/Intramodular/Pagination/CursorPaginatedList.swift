@@ -146,12 +146,17 @@ extension CursorPaginatedList {
         public let items: [Item]?
         public let nextCursor: PaginationCursor?
         
-        public init(items: [Item]?, nextCursor: PaginationCursor?) {
+        public init(
+            items: [Item]?,
+            nextCursor: PaginationCursor?
+        ) {
             self.items = items
             self.nextCursor = nextCursor
         }
         
-        public func map<T>(_ transform: (Item) throws -> T) rethrows -> CursorPaginatedList<T>.Partial {
+        public func map<T>(
+            _ transform: (Item) throws -> T
+        ) rethrows -> CursorPaginatedList<T>.Partial {
             .init(items: try items?.map({ try transform($0) }), nextCursor: nextCursor)
         }
     }
