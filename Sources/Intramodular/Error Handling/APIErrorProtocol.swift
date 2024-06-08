@@ -25,11 +25,15 @@ public protocol APIErrorProtocol: _ErrorX {
 // MARK: - Initializers
 
 extension APIErrorProtocol {
-    public static func runtime(_ error: any Error) -> Self {
+    public static func runtime(
+        _ error: any Error
+    ) -> Self {
         .runtime(AnyError(erasing: error))
     }
     
-    public init?(_catchAll error: AnyError) throws {
+    public init?(
+        _catchAll error: AnyError
+    ) throws {
         self = .runtime(error)
     }
 }
@@ -39,6 +43,19 @@ extension APIErrorProtocol {
 public enum _DefaultAPIError<API: APISpecification>: APIErrorProtocol {
     case badRequest(API.Request.Error)
     case runtime(AnyError)
+    
+    public var description: String {
+        switch self {
+            case .badRequest(let error):
+                if let error = ((error as? AnyError)?.base ?? error) as? LocalizedError {
+                    return error.localizedDescription
+                } else {
+                    return "Bad request: \(error)"
+                }
+            case .runtime(let error):
+                return error.description
+        }
+    }
 }
 
 extension _DefaultAPIError: LocalizedError {
