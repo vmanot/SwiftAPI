@@ -71,7 +71,7 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
                 try await cache.removeCachedValue(forKey: .init(stringValue: keyPrefix + $0.stringValue))
             },
             removeAllCachedValues: {
-                TODO.unimplemented
+                try await cache.removeAllCachedValues()
             }
         )
         self.codingCacheImplementation = _AnyCodingKeyedCache(base: cache, keyPrefix: keyPrefix)
