@@ -52,6 +52,9 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
         self.codingCacheImplementation = _AnyCodingKeyedCache(base: cache, keyPrefix: nil)
     }
     
+    /// Creates a keyed-cache over another cache, to allow interacting with keys that start with a given prefix.
+    ///
+    /// This can be useful when you have lots of keys like "FOOCATEGORY.key1", "FOOCATEGORY.key2", "FOOCATEGORY.key3" and want a cache where you can just reference "key1", "key2" ,"key3".
     public init<Cache: KeyedCodingCache>(
         _ cache: Cache,
         keyPrefix: String,
@@ -71,7 +74,10 @@ public struct AnyKeyedCache<Key: Hashable, Value>: KeyedCache {
                 try await cache.removeCachedValue(forKey: .init(stringValue: keyPrefix + $0.stringValue))
             },
             removeAllCachedValues: {
-                TODO.unimplemented
+                /// `KeyedCache` currently provides no means to fetch the list of stored keys.
+                ///
+                /// Since we're initializing a prefix-filtered view over another cache, we cannot implement `removeAllCachedValues`.
+                throw Never.Reason.unavailable
             }
         )
         self.codingCacheImplementation = _AnyCodingKeyedCache(base: cache, keyPrefix: keyPrefix)
