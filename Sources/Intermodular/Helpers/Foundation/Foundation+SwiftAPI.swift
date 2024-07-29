@@ -7,12 +7,12 @@ import Merge
 import Foundation
 import Swift
 
-extension URLRequest: Request {
+extension URLRequest: SwiftAPI.Request {
     public typealias Response = (data: Data, response: URLResponse)
     public typealias Error = URLError
 }
 
-extension URLSession: RequestSession {
+extension URLSession: SwiftAPI.RequestSession {
     public typealias Request = URLRequest
     
     public func task(
@@ -22,8 +22,8 @@ extension URLSession: RequestSession {
     }
 }
 
-extension URLError: _ErrorX {
-    public var traits: ErrorTraits {
+extension URLError: Diagnostics._ErrorX {
+    public var traits: Diagnostics.ErrorTraits {
         [.domain(.networking)]
     }
 }

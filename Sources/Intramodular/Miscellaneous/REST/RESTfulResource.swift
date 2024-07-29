@@ -111,15 +111,16 @@ public final class RESTfulResource<
         
         getTask
             .successPublisher
-            .receiveOnMainThread()
             .sinkResult(in: cancellables) { result in
-                switch result {
-                    case .success(let value):
-                        self._wrappedValue = value
-                    case .failure(let error):
-                        runtimeIssue(error)
-                        
-                        self._wrappedValue = nil
+                Task { @MainActor in
+                    switch result {
+                        case .success(let value):
+                            self._wrappedValue = value
+                        case .failure(let error):
+                            runtimeIssue(error)
+                            
+                            self._wrappedValue = nil
+                    }
                 }
             }
         

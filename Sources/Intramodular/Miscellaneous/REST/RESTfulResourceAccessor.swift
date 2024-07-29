@@ -79,6 +79,10 @@ public final class RESTfulResourceAccessor<
             return
         }
         
+        guard self.client == nil || self.base._client == nil else {
+            return
+        }
+        
         self.client = client
         self.base._client = client
         

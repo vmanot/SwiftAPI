@@ -10,10 +10,12 @@ public protocol KeyedCodingCache: KeyedCache where Key == AnyCodingKey, Value ==
         _ value: T,
         forKey key: AnyCodingKey
     ) async throws
+    
     func retrieveValue<T: Decodable & Sendable>(
         _ type: T.Type,
         forKey key: AnyCodingKey
     ) async throws -> T?
+    
     func retrieveInMemoryValue<T: Decodable & Sendable>(
         _ type: T.Type,
         forKey key: AnyCodingKey

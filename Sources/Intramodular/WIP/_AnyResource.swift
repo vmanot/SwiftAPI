@@ -35,7 +35,6 @@ public class _AnyResource<Value>: _ResourcePropertyWrapperType {
     ) where Resource.Value == Value {
         self.base = resource
         self.objectWillChange = .init(from: resource)
-        
         self.publisherImpl = { resource.publisher.eraseToAnyPublisher() }
     
         self._configuration = .init(get: { resource.configuration }, set: { resource.configuration = $0 })
