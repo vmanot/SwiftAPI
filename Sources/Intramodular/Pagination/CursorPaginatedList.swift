@@ -7,7 +7,7 @@ import Swallow
 import OrderedCollections
 import Swift
 
-public struct CursorPaginatedList<Item>: Initiable, PaginatedListType, Partializable {
+public struct CursorPaginatedList<Item: Sendable>: Initiable, PaginatedListType, Partializable, Sendable {
     public enum CodingKeys: CodingKey {
         case _cursorsConsumed
         case _tail

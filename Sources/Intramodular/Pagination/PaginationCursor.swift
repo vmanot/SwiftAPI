@@ -9,7 +9,7 @@ import Compute
 import FoundationX
 import Swallow
 
-public enum PaginationCursor: Hashable {
+public enum PaginationCursor: Hashable, Sendable {
     public enum CursorType: String, Codable {
         case data = "data"
         case string = "string"
