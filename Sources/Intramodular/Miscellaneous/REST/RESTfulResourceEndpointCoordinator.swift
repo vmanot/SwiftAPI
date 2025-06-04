@@ -90,7 +90,7 @@ final class RESTfulResourceEndpointCoordinator<
                         return
                     }
                     
-                    resultTask.send(status: .init(self.handleEndpointOutput(result)))
+                    resultTask.send(status: ObservableTaskStatus(self.handleEndpointOutput(result)))
                 }
             
             return resultTask.eraseToAnyTask()

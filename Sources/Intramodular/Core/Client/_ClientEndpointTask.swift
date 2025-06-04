@@ -75,7 +75,7 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
             .session
             .task(with: request)
             .successPublisher
-            .mapError { (error: TaskFailure) in
+            .mapError { (error: ObservableTaskFailure) in
                 switch error {
                     case .canceled:
                         return try! Client.API.Request.Error(_catchAll: CancellationError())!
@@ -145,7 +145,7 @@ extension _ClientEndpointTask: ObservableTask {
     typealias Success = Endpoint.Output
     typealias Error = Client.API.Error
 
-    var status: TaskStatus<Success, Error> {
+    var status: ObservableTaskStatus<Success, Error> {
         base.status
     }
     

@@ -6,6 +6,8 @@ import Merge
 import Swallow
 
 /// An async iterator that generates a sequence of cursor-paginated list partials.
+///
+/// FIXME: (@vmanot) This provides no way to pause at a page boundary.
 public struct CursorPaginatedAsyncIteratorOf<Item>: AsyncIteratorProtocol {
     public typealias Element = CursorPaginatedList<Item>.Partial
     

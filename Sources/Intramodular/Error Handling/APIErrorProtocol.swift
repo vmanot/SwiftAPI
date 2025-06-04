@@ -47,7 +47,7 @@ extension APIErrorProtocol {
     }
 }
 
-// MARK: - Implemented Conformances
+// MARK: - Conformees
 
 public enum _DefaultAPIError<API: APISpecification>: APIErrorProtocol {
     case badRequest(request: API.Request?, error: API.Request.Error)
