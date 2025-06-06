@@ -123,6 +123,10 @@ extension CursorPaginatedList: Decodable where Item: Decodable {
     }
 }
 
+extension CursorPaginatedList.Partial: Sendable {
+    
+}
+
 extension CursorPaginatedList.Partial: Equatable where Item: Equatable {
     
 }
