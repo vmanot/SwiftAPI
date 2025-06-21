@@ -6,7 +6,7 @@ let package = Package(
     name: "SwiftAPI",
     platforms: [
         .iOS(.v13),
-        .macOS(.v11),
+        .macOS(.v13),
         .tvOS(.v13),
         .watchOS(.v6)
     ],
