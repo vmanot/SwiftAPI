@@ -6,7 +6,7 @@ import Swift
 
 public protocol Request: Hashable {
     associatedtype Response
-    associatedtype Error: _ErrorX
+    associatedtype Error: Swift.Error
     
     typealias Result = Swift.Result<Response, Error>
 }

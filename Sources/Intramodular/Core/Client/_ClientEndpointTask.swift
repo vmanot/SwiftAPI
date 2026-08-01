@@ -75,15 +75,15 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
             .session
             .task(with: request)
             .successPublisher
-            .mapError { (error: ObservableTaskFailure) in
-                switch error {
+            .mapError { (failure: ObservableTaskFailure) -> Client.API.Error in
+                switch failure {
                     case .canceled:
-                        return try! Client.API.Request.Error(_catchAll: CancellationError())!
+                        return .runtime(CancellationError())
                     case .error(let error):
-                        return error
+                        return .runtime(error)
                 }
             }
-            .sinkResult { [weak self, weak task] (result: Result<Endpoint.Root.Request.Response, Endpoint.Root.Request.Error>) in
+            .sinkResult { [weak self, weak task] (result: Result<Endpoint.Root.Request.Response, Client.API.Error>) in
                 guard let `self` = self, let task = `task` else {
                     assertionFailure()
                     
@@ -101,7 +101,7 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
     }
     
     private func _forwardResult(
-        _ result: Result<Endpoint.Root.Request.Response, Endpoint.Root.Request.Error>,
+        _ result: Result<Endpoint.Root.Request.Response, Client.API.Error>,
         to task: PassthroughTask<Endpoint.Output, Client.API.Error>,
         fulfilling request: Endpoint.Root.Request
     ) {
@@ -133,7 +133,7 @@ final class _ClientEndpointTask<Client: SwiftAPI.Client, Endpoint: SwiftAPI.Endp
                 }
             }
             case .failure(let error): do {
-                task.send(status: .error(.runtime(error)))
+                task.send(status: .error(error))
                 
                 self.client.logger.error(error, metadata: ["request": request])
             }

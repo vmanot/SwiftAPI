@@ -2,15 +2,10 @@
 // Copyright (c) Vatsal Manot
 //
 
-import Diagnostics
 import Foundation
 import Swallow
 
-public enum APIErrors: _SubsystemDomain {
-    
-}
-
-public protocol APIErrorProtocol: _ErrorX {
+public protocol APIErrorProtocol: Error {
     associatedtype API: APISpecification
     
     static func badRequest(
